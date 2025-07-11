@@ -13,6 +13,7 @@ with st.expander("Ökologie spezifisch"):
         FußabdruckErste = st.slider('Fußabdruck der 1. Re-Assembly bezogen auf den Fußabdruck einer Neuproduktion [%]', min_value=0, max_value=100, value=10, format="%d %%")
         FußabdruckSteigung = st.slider('Steigung des Fußabdrucks von einer Re-Assembly zur nächsten  [%-punkte]', min_value=0, max_value=50, value=10, format="%d %%")
         FußabdruckNutzung = st.number_input('Fußabdruck der Nutzung bezogen auf den Fußabdruck der Neuproduktion [%]', min_value=0, value=0)
+        FußabdruckNutzungVerb = st.slider('Vorzeitige Effizienzsteigerung durch Re-Assembly  [0 = nicht vorhanden - 10 = sehr stark]', min_value=0, max_value=10, value=5)
 
 with st.expander("Kundennutzen spezifisch"):
     Innovation = st.slider('Särke des Innovationsrückgangs [0 = nicht vorhanden - 10 = sehr stark]', min_value=0, max_value=10, value=5)
@@ -27,6 +28,7 @@ with st.expander("Ökonomie spezifisch"):
 
 
 st.title('Datenvisualisierung mit Plotly')
+## Lineare Kurve
 
 # Initialisierung der x- und y-Werte für die erste Kurve
 x_values_curve1 = []
@@ -64,7 +66,7 @@ x_values_scaled.append(0)
 y_values_scaled.append(current_y_scaled)
 
 for i in range(1, int(10*Anz_ReAss) + 1):
-    current_y_scaled += 100 * FußabdruckNutzung /100 /Anz_ReAss
+    current_y_scaled += 100 * FußabdruckNutzung /100 /Anz_ReAss * (1-(FußabdruckNutzungVerb / 10))
     x_values_scaled.append(i/Anz_ReAss)
     y_values_scaled.append(current_y_scaled)
 
@@ -79,7 +81,8 @@ fig_plotly.add_trace(go.Scatter(
     x=x_values_curve1,
     y=y_values_curve1,
     mode="lines",
-    name="Kurve mit Zyklen",
+    name="Produkt mit linearer Nutzung",
+     line=dict(color='darkblue')
 ))
 
 # Hinzufügen der zweiten Kurve zum Diagramm auf einer sekundären X-Achse mit Skalierung durch Anz_ReAss
@@ -87,14 +90,16 @@ fig_plotly.add_trace(go.Scatter(
     x=x_values_scaled,
     y=y_values_scaled,
     mode="lines",
-    name="Skalierte Kurve"
+    name="Re-Assembly Produkt",
+     line=dict(color='lightgreen')
 ))
 
 fig_plotly.update_layout(
     title="Diagramm mit zwei skalierten Zyklen",
-    xaxis=dict(title='Primäre X-Achse', side='bottom'),
-    xaxis2=dict(title='Sekundäre X-Achse', overlaying='x', side='top'),
-    yaxis_title="Y-Achse"
+    xaxis=dict(title='Lineare Lebenszyklen', side='bottom', tickmode='linear', dtick=1),
+    xaxis2=dict(title='Sekundäre X-Achse', side='bottom', anchor='free', position=0.2),
+    yaxis=dict(title='Kumulierter ökologischer Fußabdruck', showticklabels=False),
+    legend=dict(x=0, y=1, xanchor='left', yanchor='top'),
 )
 
 st.plotly_chart(fig_plotly)
