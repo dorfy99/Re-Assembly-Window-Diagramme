@@ -1,6 +1,8 @@
 import streamlit as st
 import plotly.graph_objects as go
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 
 st.title('Daten mit Slidern einlesen')
 
@@ -103,3 +105,16 @@ fig_plotly.update_layout(
 )
 
 st.plotly_chart(fig_plotly)
+
+
+# Erstellen des DataFrames mit den x-Werten der skalierten Kurve und den entsprechenden y-Werten
+data = {
+    "X-Werte (Scaled)": x_values_scaled,
+    "Y-Werte (Scaled)": y_values_scaled,
+    "Y-Werte (Curve1)": [y for _, y in zip(x_values_scaled, y_values_curve1)]
+}
+
+df = pd.DataFrame(data)
+
+# Anzeige als Streamlit-Tabelle
+st.table(df)
