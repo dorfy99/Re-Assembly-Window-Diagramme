@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 st.title('Daten mit Slidern einlesen')
 
 # Erstellen von 9 individuellen Slidern mit Titeln und ausklappbaren Abschnitten
-st.subheader('Allgemeine Daten')
+st.subheader('Einflussgrößen auf die Diagramme')
 
 Anz_ReAss = st.slider('Anzahl Re-Assemblys je linearem Lebenszyklus', min_value=1, max_value=5, value=2)
 
@@ -23,3 +23,5 @@ with st.expander("Ökonomie spezifisch"):
        
        
 
+import matplotlib.pyplot as plt
+print(matplotlib.__version__)
