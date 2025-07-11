@@ -21,6 +21,7 @@ with st.expander("Ökonomie spezifisch 3"):
         KostenSteigung = st.slider('Steigung der Kosten von einer Re-Assembly zur nächsten', min_value=0, max_value=50, value=10)
         Subskription = st.number_input('Höhe der Subskriptionserlöse in einem linearen Lebenszyklus bezogen auf den Verkaufserlös eine linearen Produkts', min_value=0, value=50)
        
+       
 
 x_values = [0, 1, 2, 3, 4, 5]
 y_values_curve1 = [0, 1, 2, 3, 4, 5]
