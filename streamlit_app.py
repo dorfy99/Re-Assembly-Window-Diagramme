@@ -1,5 +1,5 @@
 import streamlit as st
-import plotly.graph_objects as go
+import matplotlib.pyplot as plt
 
 st.title('Daten mit Slidern einlesen')
 
@@ -22,30 +22,20 @@ with st.expander("Ökonomie spezifisch 3"):
         Subskription = st.number_input('Höhe der Subskriptionserlöse in einem linearen Lebenszyklus bezogen auf den Verkaufserlös eine linearen Produkts', min_value=0, value=50)
        
 
-# Beispiel-Daten
-x_values = [0, 1, 2 ,3 ,4 ,5]
-y_values_curve1 = [0 ,1 ,2 ,3 ,None ,6] # Hier wird der Sprung dargestellt bei x=5 
-y_values_curve2 = [0.5 ,1.5 ,2.5,None,None,None]
+x_values = [0, 1, 2, 3, 4, 5]
+y_values_curve1 = [0, 1, 2, 3, 4, 5]
+y_values_curve2 = [0.5, 1.5, 2.5, None , None ,3] # Hier wird der Sprung dargestellt bei x=5
 
-fig = go.Figure()
+# Erstellen des Diagramms
+fig, ax = plt.subplots()
+ax.plot(x_values[:4], y_values_curve1[:4], label='Kurve 1')
+ax.plot(x_values[4:], y_values_curve1[4:], linestyle='--', color='blue') # Vertikale Linie für den Sprung
+ax.plot(x_values[:4], y_values_curve2[:4], label='Kurve 2')
+ax.plot(x_values[5:], y_values_curve2[5:], linestyle='--', color='orange') # Vertikale Linie für den Sprung
 
-fig.add_trace(go.Scatter(
-    x=x_values,
-    y=y_values_curve1,
-    mode="lines+markers",
-    name="Kurve 1"
-))
+# Hinzufügen von Labels und Legende
+ax.set_xlabel('X-Achse')
+ax.set_ylabel('Y-Achse')
+ax.legend()
 
-fig.add_trace(go.Scatter(
-    x=x_values,
-    y=y_values_curve2,
-    mode="lines+markers",
-    name="Kurve 2"
-))
-
-fig.update_layout(
-    xaxis_title="X-Achse",
-    yaxis_title="Y-Achse"
-)
-
-st.plotly_chart(fig)
+st.pyplot(fig)
