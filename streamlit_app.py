@@ -1,4 +1,5 @@
 import streamlit as st
+import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 
 st.title('Daten mit Slidern einlesen')
@@ -9,9 +10,9 @@ st.subheader('Einflussgrößen auf die Diagramme')
 Anz_ReAss = st.slider('Anzahl Re-Assemblys je linearem Lebenszyklus', min_value=1, max_value=5, value=2)
 
 with st.expander("Ökologie spezifisch"):
-        FußabdruckErste = st.slider('Fußabdruck der 1. Re-Assembly bezogen auf den Fußabdruck einer Neuproduktion', min_value=0, max_value=100, value=10)
-        FußabdruckSteigung = st.slider('Steigung des Fußabdrucks von einer Re-Assembly zur nächsten', min_value=0, max_value=50, value=10)
-        FußabdruckNutzung = st.number_input('Fußabdruck der Nutzung bezogen auf den Fußabdruck der Neuproduktion', min_value=0, value=0)
+        FußabdruckErste = st.slider('Fußabdruck der 1. Re-Assembly bezogen auf den Fußabdruck einer Neuproduktion [%]', min_value=0, max_value=100, value=10, format="%d %%")
+        FußabdruckSteigung = st.slider('Steigung des Fußabdrucks von einer Re-Assembly zur nächsten  [%-punkte]', min_value=0, max_value=50, value=10, format="%d %%")
+        FußabdruckNutzung = st.number_input('Fußabdruck der Nutzung bezogen auf den Fußabdruck der Neuproduktion [%]', min_value=0, value=0)
 
 with st.expander("Kundennutzen spezifisch"):
     Innovation = st.slider('Särke des Innovationsrückgangs', min_value=0, max_value=10, value=5)
@@ -23,5 +24,45 @@ with st.expander("Ökonomie spezifisch"):
        
        
 
-import matplotlib.pyplot as plt
-print(matplotlib.__version__)
+
+
+st.title('Datenvisualisierung mit Plotly')
+
+# Beispiel-Daten für das Diagramm mit Sprüngen
+x_values = [0, 1, 2]
+y_values_curve1 = [0, 1, 3] # Hier wird der Sprung dargestellt bei x=2 
+y_values_curve2 = [0.5 ,1.5 ,None]
+
+fig_plotly = go.Figure()
+
+# Kurve 1
+fig_plotly.add_trace(go.Scatter(
+    x=x_values,
+    y=y_values_curve1,
+    mode="lines+markers",
+    name="Kurve 1"
+))
+
+# Vertikale Linie für den Sprung bei x=2
+fig_plotly.add_trace(go.Scatter(
+    x=[2, 2],
+    y=[3, 4],
+    mode="lines",
+    line=dict(color='blue', width=2),
+    showlegend=False
+))
+
+# Kurve 2
+fig_plotly.add_trace(go.Scatter(
+    x=x_values,
+    y=y_values_curve2,
+    mode="lines+markers",
+    name="Kurve 2"
+))
+
+fig_plotly.update_layout(
+    xaxis_title="X-Achse",
+    yaxis_title="Y-Achse"
+)
+
+st.plotly_chart(fig_plotly)
