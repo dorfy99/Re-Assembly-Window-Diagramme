@@ -107,14 +107,34 @@ fig_plotly.update_layout(
 st.plotly_chart(fig_plotly)
 
 
+# Sicherstellen, dass alle Listen die gleiche Länge haben
+min_length = min(len(x_values_scaled), len(y_values_scaled), len(y_values_curve1))
+
+# Kürzen der Listen auf die minimale Länge
+x_values_scaled = x_values_scaled[:min_length]
+y_values_scaled = y_values_scaled[:min_length]
+y_values_curve1 = y_values_curve1[:min_length]
+
+# Berechnung der Differenzen
+differenzen = [curve1 - scaled for curve1, scaled in zip(y_values_curve1, y_values_scaled)]
+
 # Erstellen des DataFrames mit den x-Werten der skalierten Kurve und den entsprechenden y-Werten
 data = {
     "X-Werte (Scaled)": x_values_scaled,
     "Y-Werte (Scaled)": y_values_scaled,
-    "Y-Werte (Curve1)": [y for _, y in zip(x_values_scaled, y_values_curve1)]
+    "Y-Werte (Curve1)": y_values_curve1,
+    "Differenz": differenzen
 }
 
 df = pd.DataFrame(data)
 
 # Anzeige als Streamlit-Tabelle
 st.table(df)
+
+# Ermittlung des Index mit dem höchsten Differenzwert
+max_diff_index = df['Differenz'].idxmax()
+
+# Ausgabe des entsprechenden X-Werts
+max_diff_x_value = df.at[max_diff_index, 'X-Werte (Scaled)']
+st.write(f"Der X-Wert mit der höchsten Differenz ist: {max_diff_x_value}")
+st.metric("Sweetspot nach ... Re-Assemblys", int(max_diff_x_value))
