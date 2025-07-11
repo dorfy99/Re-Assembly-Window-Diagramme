@@ -15,12 +15,12 @@ with st.expander("Ökologie spezifisch"):
         FußabdruckNutzung = st.number_input('Fußabdruck der Nutzung bezogen auf den Fußabdruck der Neuproduktion [%]', min_value=0, value=0)
 
 with st.expander("Kundennutzen spezifisch"):
-    Innovation = st.slider('Särke des Innovationsrückgangs', min_value=0, max_value=10, value=5)
+    Innovation = st.slider('Särke des Innovationsrückgangs [0 = nicht vorhanden - 10 = sehr stark]', min_value=0, max_value=10, value=5)
     
 with st.expander("Ökonomie spezifisch"):
-        KostenErste = st.slider('Kosten der 1. Re-Assembly bezogen auf die Kosten einer Neuproduktion', min_value=0, max_value=100, value=10)
-        KostenSteigung = st.slider('Steigung der Kosten von einer Re-Assembly zur nächsten', min_value=0, max_value=50, value=10)
-        Subskription = st.number_input('Höhe der Subskriptionserlöse in einem linearen Lebenszyklus bezogen auf den Verkaufserlös eine linearen Produkts', min_value=0, value=50)
+        KostenErste = st.slider('Kosten der 1. Re-Assembly bezogen auf die Kosten einer Neuproduktion [%]', min_value=0, max_value=100, value=10, format="%d %%")
+        KostenSteigung = st.slider('Steigung der Kosten von einer Re-Assembly zur nächsten [%-punkte]', min_value=0, max_value=50, value=10, format="%d %%")
+        Subskription = st.number_input('Höhe der Subskriptionserlöse in einem linearen Lebenszyklus bezogen auf den Verkaufserlös eine linearen Produkts [%]', min_value=0, value=50)
        
        
 
@@ -28,40 +28,72 @@ with st.expander("Ökonomie spezifisch"):
 
 st.title('Datenvisualisierung mit Plotly')
 
-# Beispiel-Daten für das Diagramm mit Sprüngen
-x_values = [0, 1, 2]
-y_values_curve1 = [0, 1, 3] # Hier wird der Sprung dargestellt bei x=2 
-y_values_curve2 = [0.5 ,1.5 ,None]
+# Initialisierung der x- und y-Werte für die erste Kurve
+x_values_curve1 = []
+y_values_curve1 = []
+
+# Startpunkt bei (0, 0)
+x_values_curve1.append(0)
+y_values_curve1.append(0)
+
+current_y_curve1 = 100  # Der erste Sprung auf (0, 100)
+x_values_curve1.append(0)
+y_values_curve1.append(current_y_curve1)
+
+for i in range(1, 11):
+    current_y_curve1 += 100 * FußabdruckNutzung /100
+    x_values_curve1.append(i)
+    y_values_curve1.append(current_y_curve1)
+
+    current_y_curve1 += 100
+    x_values_curve1.append(i)
+    y_values_curve1.append(current_y_curve1)
+
+## Re-Assembly Kurve
+
+# Initialisierung der x- und y-Werte für die zweite Kurve mit Skalierung durch Anz_ReAss
+x_values_scaled = []
+y_values_scaled = []
+
+# Startpunkt bei (0, 0)
+x_values_scaled.append(0)
+y_values_scaled.append(0)
+
+current_y_scaled = 100  # Der erste Sprung auf (0, 100)
+x_values_scaled.append(0)
+y_values_scaled.append(current_y_scaled)
+
+for i in range(1, int(10*Anz_ReAss) + 1):
+    current_y_scaled += 100 * FußabdruckNutzung /100 /Anz_ReAss
+    x_values_scaled.append(i/Anz_ReAss)
+    y_values_scaled.append(current_y_scaled)
+
+    current_y_scaled += 100 * (FußabdruckErste + FußabdruckSteigung * (i-1)) / 100
+    x_values_scaled.append(i/Anz_ReAss)
+    y_values_scaled.append(current_y_scaled)
 
 fig_plotly = go.Figure()
 
-# Kurve 1
+# Hinzufügen der ersten Kurve zum Diagramm auf der primären X-Achse
 fig_plotly.add_trace(go.Scatter(
-    x=x_values,
+    x=x_values_curve1,
     y=y_values_curve1,
-    mode="lines+markers",
-    name="Kurve 1"
-))
-
-# Vertikale Linie für den Sprung bei x=2
-fig_plotly.add_trace(go.Scatter(
-    x=[2, 2],
-    y=[3, 4],
     mode="lines",
-    line=dict(color='blue', width=2),
-    showlegend=False
+    name="Kurve mit Zyklen",
 ))
 
-# Kurve 2
+# Hinzufügen der zweiten Kurve zum Diagramm auf einer sekundären X-Achse mit Skalierung durch Anz_ReAss
 fig_plotly.add_trace(go.Scatter(
-    x=x_values,
-    y=y_values_curve2,
-    mode="lines+markers",
-    name="Kurve 2"
+    x=x_values_scaled,
+    y=y_values_scaled,
+    mode="lines",
+    name="Skalierte Kurve"
 ))
 
 fig_plotly.update_layout(
-    xaxis_title="X-Achse",
+    title="Diagramm mit zwei skalierten Zyklen",
+    xaxis=dict(title='Primäre X-Achse', side='bottom'),
+    xaxis2=dict(title='Sekundäre X-Achse', overlaying='x', side='top'),
     yaxis_title="Y-Achse"
 )
 
