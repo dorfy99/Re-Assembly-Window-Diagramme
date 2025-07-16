@@ -76,35 +76,37 @@ for i in range(1, int(10*Anz_ReAss) + 1):
     x_values_scaled.append(i/Anz_ReAss)
     y_values_scaled.append(current_y_scaled)
 
-fig_plotly = go.Figure()
+with st.expander("Ökologie spezifisch"):
 
-# Hinzufügen der ersten Kurve zum Diagramm auf der primären X-Achse
-fig_plotly.add_trace(go.Scatter(
-    x=x_values_curve1,
-    y=y_values_curve1,
-    mode="lines",
-    name="Produkt mit linearer Nutzung",
-     line=dict(color='darkblue')
-))
+    fig_plotly = go.Figure()
 
-# Hinzufügen der zweiten Kurve zum Diagramm auf einer sekundären X-Achse mit Skalierung durch Anz_ReAss
-fig_plotly.add_trace(go.Scatter(
-    x=x_values_scaled,
-    y=y_values_scaled,
-    mode="lines",
-    name="Re-Assembly Produkt",
-     line=dict(color='lightgreen')
-))
+    # Hinzufügen der ersten Kurve zum Diagramm auf der primären X-Achse
+    fig_plotly.add_trace(go.Scatter(
+        x=x_values_curve1,
+        y=y_values_curve1,
+        mode="lines",
+        name="Produkt mit linearer Nutzung",
+        line=dict(color='darkblue')
+    ))
 
-fig_plotly.update_layout(
-    title="Ökologie",
-    xaxis=dict(title='Lineare Lebenszyklen', side='bottom', tickmode='linear', dtick=1),
-    xaxis2=dict(title='Sekundäre X-Achse', side='bottom', anchor='free', position=0.2),
-    yaxis=dict(title='Kumulierter ökologischer Fußabdruck', showticklabels=False),
-    legend=dict(x=0, y=1, xanchor='left', yanchor='top'),
-)
+    # Hinzufügen der zweiten Kurve zum Diagramm auf einer sekundären X-Achse mit Skalierung durch Anz_ReAss
+    fig_plotly.add_trace(go.Scatter(
+        x=x_values_scaled,
+        y=y_values_scaled,
+        mode="lines",
+        name="Re-Assembly Produkt",
+        line=dict(color='lightgreen')
+    ))
 
-st.plotly_chart(fig_plotly)
+    fig_plotly.update_layout(
+        title="Ökologie",
+        xaxis=dict(title='Lineare Lebenszyklen', side='bottom', tickmode='linear', dtick=1),
+        xaxis2=dict(title='Sekundäre X-Achse', side='bottom', anchor='free', position=0.2),
+        yaxis=dict(title='Kumulierter ökologischer Fußabdruck', showticklabels=False),
+        legend=dict(x=0, y=1, xanchor='left', yanchor='top'),
+    )
+
+    st.plotly_chart(fig_plotly)
 
 
 ## Sicherstellen, dass alle Listen die gleiche Länge haben
@@ -201,9 +203,9 @@ kundeRe_y_values.append(KundeRe_y_temp)
 
 # Erstellen des Datensatzes mit dem gewünschten Muster
 for kundeRe_i in range(1, int(10 * Anz_ReAss + 1)):
-    num_points = int((50 / Anz_ReAss) * (1 / Anz_ReAss))  # Reduzierung der Anzahl Punkte 
+    num_points = 50  # Reduzierung der Anzahl Punkte 
     kundeRe_x_cosine = np.linspace(kundeRe_i - 1, kundeRe_i, num=num_points)
-    kundeRe_y_cosine = KundeRe_y_temp - (25/Anz_ReAss * (1 - np.cos((np.pi / 2) * (kundeRe_x_cosine - (kundeRe_i - 1)))))
+    kundeRe_y_cosine = KundeRe_y_temp - (25/(Anz_ReAss) * (1 - np.cos((np.pi / 2) * (kundeRe_x_cosine - (kundeRe_i -1 )))))
     
     # Hinzufügen der interpolierten Punkte zum Datensatz
     kundeRe_x_values.extend(kundeRe_x_cosine)
@@ -214,7 +216,7 @@ for kundeRe_i in range(1, int(10 * Anz_ReAss + 1)):
     
     # Sprung um ... bei Neuproduktion
     if kundeRe_i < int(10 * Anz_ReAss):
-        KundeRe_y_temp += 60/Anz_ReAss
+        KundeRe_y_temp += (60/Anz_ReAss - ((Innovation/2) * (1 + ((kundeRe_i)/100))))
         kundeRe_x_values.append(kundeRe_i)
         kundeRe_y_values.append(KundeRe_y_temp)
 
@@ -230,7 +232,7 @@ kunde_re_data = {
 kunde_re_df = pd.DataFrame(kunde_re_data)
 
 # Berechnung des gleitenden Durchschnitts über ein Fenster von Größe 'window'
-window_size = int(len(kunde_re_df) / len(np.unique(kunde_re_df["KundeRe_X_Werte"]))) * 50 
+window_size = int(len(kunde_re_df) / len(np.unique(kunde_re_df["KundeRe_X_Werte"]))) * 30
 floating_average_Re_asymmetric = (
     pd.Series(kunde_re_df["KundeRe_Y_Werte"])
       .rolling(window=window_size, min_periods=1)
