@@ -4,32 +4,34 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-st.title('Daten mit Slidern einlesen')
+st.title('Simulationstool zur Re-Wind-Analyse spezifischer Produkte')
+
+st.divider(width="stretch")
+st.subheader('Einfach produktspezifische Merkamale eingeben ...')
 
 # Erstellen von 9 individuellen Slidern mit Titeln und ausklappbaren Abschnitten
-st.subheader('Einflussgrößen auf die Diagramme')
 
 Anz_ReAss = st.slider('Anzahl Re-Assemblys je linearem Lebenszyklus', min_value=1, max_value=5, value=2)
 
-with st.expander("Ökologie spezifisch"):
+with st.expander("Ökologie spezifische Merkmale"):
         FußabdruckErste = st.slider('Fußabdruck der 1. Re-Assembly bezogen auf den Fußabdruck einer Neuproduktion [%]', min_value=0, max_value=100, value=10, format="%d %%")
         FußabdruckSteigung = st.slider('Steigung des Fußabdrucks von einer Re-Assembly zur nächsten  [%-punkte]', min_value=0, max_value=50, value=10, format="%d %%")
-        FußabdruckNutzung = st.number_input('Fußabdruck der Nutzung bezogen auf den Fußabdruck der Neuproduktion [%]', min_value=0, value=0)
+        FußabdruckNutzung = st.number_input('Fußabdruck der Nutzung bezogen auf den Fußabdruck der Neuproduktion [%]', min_value=0, value=50)
         FußabdruckNutzungVerb = st.slider('Vorzeitige Effizienzsteigerung durch Re-Assembly  [0 = nicht vorhanden - 10 = sehr stark]', min_value=0, max_value=10, value=5)
 
-with st.expander("Kundennutzen spezifisch"):
+with st.expander("Kundennutzen spezifische Merkmale"):
     Innovation = st.slider('Särke des Innovationsrückgangs [0 = nicht vorhanden - 10 = sehr stark]', min_value=0, max_value=10, value=5)
     
-with st.expander("Ökonomie spezifisch"):
+with st.expander("Ökonomie spezifische Merkmale"):
         KostenErste = st.slider('Kosten der 1. Re-Assembly bezogen auf die Kosten einer Neuproduktion [%]', min_value=0, max_value=100, value=10, format="%d %%")
         KostenSteigung = st.slider('Steigung der Kosten von einer Re-Assembly zur nächsten [%-punkte]', min_value=0, max_value=50, value=10, format="%d %%")
-        Subskription = st.number_input('Höhe der Subskriptionserlöse in einem linearen Lebenszyklus bezogen auf den Verkaufserlös eine linearen Produkts [%]', min_value=0, value=50)
+        Subskription = st.number_input('Höhe der Subskriptionserlöse in einem linearen Lebenszyklus bezogen auf den Verkaufserlös eines linearen Produkts [%]', min_value=0, value=120)
        
        
 
 
-
-st.title('Fenster und Sweetspot Diagramme')
+st.divider(width="stretch")
+st.subheader('... und Fenster & Sweetspot Diagramme anzeigen lassen')
 ## Lineare Kurve
 
 # Initialisierung der x- und y-Werte für die erste Kurve
@@ -44,13 +46,13 @@ current_y_curve1 = 100  # Der erste Sprung auf (0, 100)
 x_values_curve1.append(0)
 y_values_curve1.append(current_y_curve1)
 
-for i in range(1, 11):
+for okonomRe_i in range(1, 11):
     current_y_curve1 += 100 * FußabdruckNutzung /100
-    x_values_curve1.append(i)
+    x_values_curve1.append(okonomRe_i)
     y_values_curve1.append(current_y_curve1)
 
     current_y_curve1 += 100
-    x_values_curve1.append(i)
+    x_values_curve1.append(okonomRe_i)
     y_values_curve1.append(current_y_curve1)
 
 ## Re-Assembly Kurve
@@ -67,16 +69,16 @@ current_y_scaled = 100  # Der erste Sprung auf (0, 100)
 x_values_scaled.append(0)
 y_values_scaled.append(current_y_scaled)
 
-for i in range(1, int(10*Anz_ReAss) + 1):
+for okonomRe_i in range(1, int(10*Anz_ReAss) + 1):
     current_y_scaled += 100 * FußabdruckNutzung /100 /Anz_ReAss * (1-(FußabdruckNutzungVerb / 10))
-    x_values_scaled.append(i/Anz_ReAss)
+    x_values_scaled.append(okonomRe_i/Anz_ReAss)
     y_values_scaled.append(current_y_scaled)
 
-    current_y_scaled += 100 * (FußabdruckErste + FußabdruckSteigung * (i-1)) / 100
-    x_values_scaled.append(i/Anz_ReAss)
+    current_y_scaled += 100 * (FußabdruckErste + FußabdruckSteigung * (okonomRe_i-1)) / 100
+    x_values_scaled.append(okonomRe_i/Anz_ReAss)
     y_values_scaled.append(current_y_scaled)
 
-with st.expander("Ökologie spezifisches Fester-Diagramm"):
+with st.expander("Ökologie Diagramm"):
 
     fig_plotly = go.Figure()
 
@@ -242,7 +244,7 @@ floating_average_Re_asymmetric = (
 
 
 ## Erstellen des Liniendiagramms mit Plotly ohne Punkte und mit gestrichelter Linie für Floating Average.
-with st.expander("Kundennutzen spezifisches Fester-Diagramm"):
+with st.expander("Kundennutzen Diagramm"):
    
     fig_kunde_plotly = go.Figure()
 
@@ -288,4 +290,85 @@ with st.expander("Kundennutzen spezifisches Fester-Diagramm"):
 
     st.plotly_chart(fig_kunde_plotly)
 
+### Ökonomie Diagramm
 
+## Lineare Kurve Ökonomie
+
+# Initialisierung der x- und y-Werte für die erste Kurve
+okonom_x_values = []
+okonom_y_values = []
+
+# Startpunkt bei (0, 0)
+okonom_x_values.append(0)
+okonom_y_values.append(0)
+
+okonom_current_y = 100  # Der erste Sprung auf (0, 100)
+okonom_x_values.append(0)
+okonom_y_values.append(okonom_current_y)
+
+for okonomRe_i in range(1, 11):
+    #Steigung in Nutzung
+    okonom_current_y += 0
+    okonom_x_values.append(okonomRe_i)
+    okonom_y_values.append(okonom_current_y)
+
+    #Sprung bei Neukauf
+    okonom_current_y += 100
+    okonom_x_values.append(okonomRe_i)
+    okonom_y_values.append(okonom_current_y)
+
+## Re-Assembly Kurve Ökonomie
+
+# Initialisierung der x- und y-Werte für die zweite Kurve mit Skalierung durch Anz_ReAss
+okonomRe_x_values = []
+okonomRe_y_values = []
+
+# Startpunkt bei (0, 0)
+okonomRe_x_values.append(0)
+okonomRe_y_values.append(0)
+
+okonomRe_current_y_scaled = -100   # Der erste Sprung auf (0,-100)
+okonomRe_x_values.append(0)
+okonomRe_y_values.append(okonomRe_current_y_scaled)
+
+# lineare Steigung durch Subskription
+for okonomRe_i in range(1, int(10*Anz_ReAss) + 1):
+    okonomRe_current_y_scaled += 100 * (Subskription/100)
+    okonomRe_x_values.append(okonomRe_i/Anz_ReAss)
+    okonomRe_y_values.append(okonomRe_current_y_scaled)
+
+    #Sprung durch Re-Assembly
+    okonomRe_current_y_scaled -=100* (KostenErste+KostenSteigung*(okonomRe_i-1))/100
+    okonomRe_x_values.append(okonomRe_i/Anz_ReAss) 
+    okonomRe_y_values.append(okonomRe_current_y_scaled) 
+
+with st.expander("Ökonomie Diagramm"):
+
+    fig_okonom_plotly= go.Figure()
+
+    fig_okonom_plotly.add_trace(go.Scatter(
+        x=okonom_x_values,
+        y=okonom_y_values,
+        mode="lines",
+        name="Produkt mit linearer Nutzung",
+        line=dict(color='darkblue')
+    ))
+
+    fig_okonom_plotly.add_trace(go.Scatter(
+        x=okonomRe_x_values,
+        y=okonomRe_y_values,
+        mode="lines",
+        name="Produkt mit linearer Nutzung",
+        line=dict(color='lightgreen')
+    ))
+
+
+    fig_okonom_plotly.update_layout(
+        title="Ökologie",
+        xaxis=dict(title='Lineare Lebenszyklen', side='bottom', tickmode='linear', dtick=1),
+        xaxis2=dict(title='Sekundäre X-Achse', side='bottom', anchor='free', position=.2),
+        yaxis=dict(title='Kumulierter Gewinn des Herstellers', showticklabels=False),
+        legend=dict(x=0, y=1, xanchor='left', yanchor='top'),
+    )
+
+    st.plotly_chart(fig_okonom_plotly)
