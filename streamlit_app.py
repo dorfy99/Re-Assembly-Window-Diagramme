@@ -76,7 +76,7 @@ for i in range(1, int(10*Anz_ReAss) + 1):
     x_values_scaled.append(i/Anz_ReAss)
     y_values_scaled.append(current_y_scaled)
 
-with st.expander("Ökologie spezifisch"):
+with st.expander("Ökologie spezifisches Fester-Diagramm"):
 
     fig_plotly = go.Figure()
 
@@ -214,9 +214,9 @@ for kundeRe_i in range(1, int(10 * Anz_ReAss + 1)):
     # Aktualisieren des aktuellen y-Wertes nach dem Abfall
     KundeRe_y_temp -= 50/Anz_ReAss
     
-    # Sprung um ... bei Neuproduktion
+    # Sprung um ... bei Neuproduktion - Innovationsrückgang in Klammer berücksichtigt
     if kundeRe_i < int(10 * Anz_ReAss):
-        KundeRe_y_temp += (60/Anz_ReAss - ((Innovation/2) * (1 + ((kundeRe_i)/100))))
+        KundeRe_y_temp += (60/Anz_ReAss - ((Innovation/5) * (1 + ((kundeRe_i)/50))))
         kundeRe_x_values.append(kundeRe_i)
         kundeRe_y_values.append(KundeRe_y_temp)
 
@@ -232,7 +232,8 @@ kunde_re_data = {
 kunde_re_df = pd.DataFrame(kunde_re_data)
 
 # Berechnung des gleitenden Durchschnitts über ein Fenster von Größe 'window'
-window_size = int(len(kunde_re_df) / len(np.unique(kunde_re_df["KundeRe_X_Werte"]))) * 30
+window_size = int(len(kunde_re_df) / len(np.unique(kunde_re_df["KundeRe_X_Werte"]))) * 50
+
 floating_average_Re_asymmetric = (
     pd.Series(kunde_re_df["KundeRe_Y_Werte"])
       .rolling(window=window_size, min_periods=1)
@@ -241,48 +242,50 @@ floating_average_Re_asymmetric = (
 
 
 ## Erstellen des Liniendiagramms mit Plotly ohne Punkte und mit gestrichelter Linie für Floating Average.
-fig_kunde_plotly = go.Figure()
-
-fig_kunde_plotly.add_trace(go.Scatter(
-    x=kunde_df["Kunde_X-Werte"],
-    y=kunde_df["Kunde_Y-Werte"],
-    mode="lines",
-    line=dict(color='darkblue'),
-    name="Produkt mit linearer Nutzung"  
-))
-
-fig_kunde_plotly.add_trace(go.Scatter(
-    x=kunde_df["Kunde_X-Werte"],
-    y=floating_average_asymmetric,
-    mode="lines",
-    line=dict(dash='dash', color='darkblue'),
-    name="Produkt mit linearer Nutzung: langfristiges Mittel"
-))
-
-fig_kunde_plotly.add_trace(go.Scatter(
-    x=kunde_re_df["KundeRe_X_Werte"],
-    y=kunde_re_df["KundeRe_Y_Werte"],
-    mode="lines",
-    line=dict(color='lightgreen'), 
-    name="Re-Assembly Produkt"  
-))
-
-fig_kunde_plotly.add_trace(go.Scatter(
-    x=kunde_df["Kunde_X-Werte"],
-    y=floating_average_Re_asymmetric,
-    mode="lines",
-    line=dict(dash='dash', color='lightgreen'),
-    name="Re-Assembly Produkt: langfristiges Mittel"  
- ))
+with st.expander("Kundennutzen spezifisches Fester-Diagramm"):
    
-fig_kunde_plotly.update_layout(
-    title="Kundennutzen",
-    xaxis=dict(title='Lineare Lebenszyklen', side='bottom', tickmode='linear', dtick=1),
-    xaxis2=dict(title='Sekundäre X-Achse', side='bottom', anchor='free', position=0.2),
-    yaxis=dict(title='Kundennutzen', showticklabels=False),
-    legend=dict(x=0, y=1, xanchor='left', yanchor='top'),
-)
+    fig_kunde_plotly = go.Figure()
 
-st.plotly_chart(fig_kunde_plotly)
+    fig_kunde_plotly.add_trace(go.Scatter(
+        x=kunde_df["Kunde_X-Werte"],
+        y=kunde_df["Kunde_Y-Werte"],
+        mode="lines",
+        line=dict(color='darkblue'),
+        name="Produkt mit linearer Nutzung"  
+    ))
+
+    fig_kunde_plotly.add_trace(go.Scatter(
+        x=kunde_df["Kunde_X-Werte"],
+        y=floating_average_asymmetric,
+        mode="lines",
+        line=dict(dash='dash', color='darkblue'),
+        name="Produkt mit linearer Nutzung: langfristiges Mittel"
+    ))
+
+    fig_kunde_plotly.add_trace(go.Scatter(
+        x=kunde_re_df["KundeRe_X_Werte"],
+        y=kunde_re_df["KundeRe_Y_Werte"],
+        mode="lines",
+        line=dict(color='lightgreen'), 
+        name="Re-Assembly Produkt"  
+    ))
+
+    fig_kunde_plotly.add_trace(go.Scatter(
+        x=kunde_re_df["KundeRe_X_Werte"],
+        y=floating_average_Re_asymmetric,
+        mode="lines",
+        line=dict(dash='dash', color='lightgreen'),
+        name="Re-Assembly Produkt: langfristiges Mittel"  
+    ))
+    
+    fig_kunde_plotly.update_layout(
+        title="Kundennutzen",
+        xaxis=dict(title='Lineare Lebenszyklen', side='bottom', tickmode='linear', dtick=1),
+        xaxis2=dict(title='Sekundäre X-Achse', side='bottom', anchor='free', position=0.2),
+        yaxis=dict(title='Kundennutzen', showticklabels=False),
+        legend=dict(x=0, y=1, xanchor='left', yanchor='top'),
+    )
+
+    st.plotly_chart(fig_kunde_plotly)
 
 
