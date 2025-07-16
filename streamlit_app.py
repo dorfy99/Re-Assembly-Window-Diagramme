@@ -141,11 +141,7 @@ st.plotly_chart(fig_plotly)
 
 
 
-#### Kundennutzen Diagramm
-
-import numpy as np
-import pandas as pd
-import plotly.graph_objects as go
+#### Kundennutzen Diagramm Lineares Produkt
 
 # Initialisierung der x- und y-Werte für den Graphen
 kunde_x_values = []
@@ -183,31 +179,108 @@ kunde_data = {
 
 kunde_df = pd.DataFrame(kunde_data)
 
-# Berechnung des gleitenden Durchschnitts über ein Fenster von z.B. Größe 'window'
-window_size = 50* int(len(kunde_df) / len(np.unique(kunde_df["Kunde_X-Werte"]))) 
-floating_average = kunde_df["Kunde_Y-Werte"].rolling(window=window_size, min_periods=1).mean()
+# Berechnung des gleitenden Durchschnitts über ein Fenster von Größe 'window'
+window_size = int(len(kunde_df) / len(np.unique(kunde_df["Kunde_X-Werte"]))) * 50 
+floating_average_asymmetric = (
+    pd.Series(kunde_df["Kunde_Y-Werte"])
+      .rolling(window=window_size, min_periods=1)
+      .mean()
+)
 
-# Erstellen des Liniendiagramms mit Plotly ohne Punkte und mit gestrichelter Linie für Floating Average.
+
+### Kundennutzen Diagramm Re-Assembly
+
+# Initialisierung der x- und y-Werte für die ReAss Kurve
+kundeRe_x_values = []
+kundeRe_y_values = []
+
+# Startpunkt bei (0, 100) für die ReAss Kurve
+KundeRe_y_temp = 100
+kundeRe_x_values.append(0)
+kundeRe_y_values.append(KundeRe_y_temp)
+
+# Erstellen des Datensatzes mit dem gewünschten Muster
+for kundeRe_i in range(1, int(10 * Anz_ReAss + 1)):
+    num_points = int((50 / Anz_ReAss) * (1 / Anz_ReAss))  # Reduzierung der Anzahl Punkte 
+    kundeRe_x_cosine = np.linspace(kundeRe_i - 1, kundeRe_i, num=num_points)
+    kundeRe_y_cosine = KundeRe_y_temp - (25/Anz_ReAss * (1 - np.cos((np.pi / 2) * (kundeRe_x_cosine - (kundeRe_i - 1)))))
+    
+    # Hinzufügen der interpolierten Punkte zum Datensatz
+    kundeRe_x_values.extend(kundeRe_x_cosine)
+    kundeRe_y_values.extend(kundeRe_y_cosine)
+
+    # Aktualisieren des aktuellen y-Wertes nach dem Abfall
+    KundeRe_y_temp -= 50/Anz_ReAss
+    
+    # Sprung um ... bei Neuproduktion
+    if kundeRe_i < int(10 * Anz_ReAss):
+        KundeRe_y_temp += 60/Anz_ReAss
+        kundeRe_x_values.append(kundeRe_i)
+        kundeRe_y_values.append(KundeRe_y_temp)
+
+# Skalierung auf X - Achse des linearen Produks
+scaled_kundeRe_x_values = [x / Anz_ReAss for x in kundeRe_x_values]
+
+# Erstellen des DataFrames zur Visualisierung
+kunde_re_data = {
+    "KundeRe_X_Werte": scaled_kundeRe_x_values,
+    "KundeRe_Y_Werte": kundeRe_y_values,
+}
+
+kunde_re_df = pd.DataFrame(kunde_re_data)
+
+# Berechnung des gleitenden Durchschnitts über ein Fenster von Größe 'window'
+window_size = int(len(kunde_re_df) / len(np.unique(kunde_re_df["KundeRe_X_Werte"]))) * 50 
+floating_average_Re_asymmetric = (
+    pd.Series(kunde_re_df["KundeRe_Y_Werte"])
+      .rolling(window=window_size, min_periods=1)
+      .mean()
+)
+
+
+## Erstellen des Liniendiagramms mit Plotly ohne Punkte und mit gestrichelter Linie für Floating Average.
 fig_kunde_plotly = go.Figure()
 
 fig_kunde_plotly.add_trace(go.Scatter(
     x=kunde_df["Kunde_X-Werte"],
     y=kunde_df["Kunde_Y-Werte"],
-    mode="lines",  
+    mode="lines",
+    line=dict(color='darkblue'),
+    name="Produkt mit linearer Nutzung"  
 ))
 
 fig_kunde_plotly.add_trace(go.Scatter(
     x=kunde_df["Kunde_X-Werte"],
-    y=floating_average,
+    y=floating_average_asymmetric,
     mode="lines",
-    line=dict(dash='dash', color='gray'),
-    name="Floating Average"
+    line=dict(dash='dash', color='darkblue'),
+    name="Produkt mit linearer Nutzung: langfristiges Mittel"
 ))
 
+fig_kunde_plotly.add_trace(go.Scatter(
+    x=kunde_re_df["KundeRe_X_Werte"],
+    y=kunde_re_df["KundeRe_Y_Werte"],
+    mode="lines",
+    line=dict(color='lightgreen'), 
+    name="Re-Assembly Produkt"  
+))
+
+fig_kunde_plotly.add_trace(go.Scatter(
+    x=kunde_df["Kunde_X-Werte"],
+    y=floating_average_Re_asymmetric,
+    mode="lines",
+    line=dict(dash='dash', color='lightgreen'),
+    name="Re-Assembly Produkt: langfristiges Mittel"  
+ ))
+   
 fig_kunde_plotly.update_layout(
-     title="Concaver Abfall mit Sprüngen und Floating Average",
-     xaxis=dict(title='X-Achse'),
-     yaxis=dict(title='Y-Achse'),
+    title="Kundennutzen",
+    xaxis=dict(title='Lineare Lebenszyklen', side='bottom', tickmode='linear', dtick=1),
+    xaxis2=dict(title='Sekundäre X-Achse', side='bottom', anchor='free', position=0.2),
+    yaxis=dict(title='Kundennutzen', showticklabels=False),
+    legend=dict(x=0, y=1, xanchor='left', yanchor='top'),
 )
 
 st.plotly_chart(fig_kunde_plotly)
+
+
