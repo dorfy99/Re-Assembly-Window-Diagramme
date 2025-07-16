@@ -302,7 +302,7 @@ okonom_y_values = []
 okonom_x_values.append(0)
 okonom_y_values.append(0)
 
-okonom_current_y = 100  # Der erste Sprung auf (0, 100)
+okonom_current_y = 50  # Der erste Sprung auf (0, 100)
 okonom_x_values.append(0)
 okonom_y_values.append(okonom_current_y)
 
@@ -333,7 +333,7 @@ okonomRe_y_values.append(okonomRe_current_y_scaled)
 
 # lineare Steigung durch Subskription
 for okonomRe_i in range(1, int(10*Anz_ReAss) + 1):
-    okonomRe_current_y_scaled += 100 * (Subskription/100)
+    okonomRe_current_y_scaled += 150 * (Subskription/100) / Anz_ReAss
     okonomRe_x_values.append(okonomRe_i/Anz_ReAss)
     okonomRe_y_values.append(okonomRe_current_y_scaled)
 
