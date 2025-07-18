@@ -242,6 +242,17 @@ floating_average_Re_asymmetric = (
       .mean()
 )
 
+## Korridor des Kundennutzen
+# X-Werte definieren: linear von 0 bis 10 in 1er Schritten
+x = np.arange(0, 11, 1)
+
+# Erste Gerade: startet bei y=100 mit einer Steigung von 10
+y1 = 100 + 10 * x
+
+# Zweite Gerade: startet bei y=75 mit einer Steigung von 10
+y2 = 65 + 10 * x
+
+
 
 ## Erstellen des Liniendiagramms mit Plotly ohne Punkte und mit gestrichelter Linie für Floating Average.
 with st.expander("Kundennutzen Diagramm"):
@@ -280,6 +291,16 @@ with st.expander("Kundennutzen Diagramm"):
         name="Re-Assembly Produkt: langfristiges Mittel"  
     ))
     
+    # Grauen Bereich zwischen den Linien hinzufügen (fill)
+    fig_kunde_plotly.add_trace(go.Scatter(
+        x=np.concatenate([x, x[::-1]]),
+        y=np.concatenate([y1, y2[::-1]]),
+        fill='toself',
+        fillcolor='rgba(128,128,128,0.1)',
+        line=dict(color='rgba(255,255,255,0)'),
+        showlegend=False,
+))
+
     fig_kunde_plotly.update_layout(
         title="Kundennutzen",
         xaxis=dict(title='Lineare Lebenszyklen', side='bottom', tickmode='linear', dtick=1),
