@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+
 st.title('Simulationstool zur Re-Wind-Analyse spezifischer Produkte')
 
 st.divider(width="stretch")
@@ -34,7 +35,6 @@ st.divider(width="stretch")
 st.subheader('... und Fenster & Sweetspot Diagramme anzeigen lassen')
 
 ### Ökologie Diagramm
-
 
 ## Lineare Kurve
 
@@ -113,6 +113,15 @@ with st.expander("Ökologie Diagramm"):
     )
 
     st.plotly_chart(fig_plotly)
+
+
+## Berechnung von Sweetspot und Fenster-Grenzen
+
+x_common = np.linspace(min(min(okologisch_x_wert), min(okologischRe_x_wert)), max(max(okologisch_x_wert), max(okologischRe_x_wert)), num=500)
+okolog_interp = interp1d(okologisch_x_wert, okologisch_y_wert, kind='linear', fill_value="extrapolate")
+okologRe_interp = interp1d(okologischRe_x_wert, okologischRe_y_wert, kind='linear', fill_value="extrapolate")
+
+
 
 
 ## Sicherstellen, dass alle Listen die gleiche Länge haben
