@@ -3,7 +3,7 @@ import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
+from scipy.interpolate import interp1d
 
 st.title('Simulationstool zur Re-Wind-Analyse spezifischer Produkte')
 
@@ -117,11 +117,38 @@ with st.expander("Ökologie Diagramm"):
 
 ## Berechnung von Sweetspot und Fenster-Grenzen
 
-x_common = np.linspace(min(min(okologisch_x_wert), min(okologischRe_x_wert)), max(max(okologisch_x_wert), max(okologischRe_x_wert)), num=500)
-okolog_interp = interp1d(okologisch_x_wert, okologisch_y_wert, kind='linear', fill_value="extrapolate")
-okologRe_interp = interp1d(okologischRe_x_wert, okologischRe_y_wert, kind='linear', fill_value="extrapolate")
+x_common = np.linspace(min(min(okolog_x_values), min(okologRe_x_values)), max(max(okolog_x_values), max(okologRe_x_values)), num=500)
 
+okolog_interp = interp1d(okolog_x_values, okolog_y_values, kind='linear', fill_value="extrapolate")
+okologRe_interp = interp1d(okologRe_x_values, okologRe_y_values, kind='linear', fill_value="extrapolate")
 
+okolog_y_values_interp = okolog_interp(x_common)
+okologRe_y_values_interp = okologRe_interp(x_common)
+
+okolog_diff= okolog_y_values_interp - okologRe_y_values_interp
+
+# Erstelle einen DataFrame mit den x-Werten und den beiden y-Wert-Reihen und der Differenz der y-Werte
+okonom_data = {
+    'x': x_common,
+    'Interpolated Okolog': okolog_y_values_interp,
+    'Interpolated Okolog Re': okologRe_y_values_interp,
+    'Differenz' : okolog_diff
+}
+df_interpolated = pd.DataFrame(okonom_data)
+
+# Maximaler positiver Wert in 'Differenz' finden
+okolog_diff_max = df_interpolated[df_interpolated['Differenz'] == df_interpolated['Differenz'].max()]['x'].values[0]
+okolog_sweetspot = int(okolog_diff_max*Anz_ReAss)
+# Vorzeichenwechsel finden
+sign_change_x_values = df_interpolated[df_interpolated['Differenz'].shift() * df_interpolated['Differenz'] < 0] ['x'].values[0]
+
+st.write("X-Wert mit maximalem positivem Differenz:", okolog_diff_max)
+st.write("optimaler Neustartzeitpunkt nach ... Re-Assemblys", okolog_sweetspot)
+st.write("X-Werte mit Vorzeichenwechsel:", sign_change_x_values)
+
+# Plotten der Tabelle mit Streamlit
+st.write("Interpolierte Werte:")
+st.dataframe(df_interpolated)
 
 
 ## Sicherstellen, dass alle Listen die gleiche Länge haben
