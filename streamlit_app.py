@@ -32,51 +32,55 @@ with st.expander("Ökonomie spezifische Merkmale"):
 
 st.divider(width="stretch")
 st.subheader('... und Fenster & Sweetspot Diagramme anzeigen lassen')
+
+### Ökologie Diagramm
+
+
 ## Lineare Kurve
 
 # Initialisierung der x- und y-Werte für die erste Kurve
-x_values_curve1 = []
-y_values_curve1 = []
+okolog_x_values = []
+okolog_y_values = []
 
 # Startpunkt bei (0, 0)
-x_values_curve1.append(0)
-y_values_curve1.append(0)
+okolog_x_values.append(0)
+okolog_y_values.append(0)
 
-current_y_curve1 = 100  # Der erste Sprung auf (0, 100)
-x_values_curve1.append(0)
-y_values_curve1.append(current_y_curve1)
+okolog_y_temp = 100  # Der erste Sprung auf (0, 100)
+okolog_x_values.append(0)
+okolog_y_values.append(okolog_y_temp)
 
-for okonomRe_i in range(1, 11):
-    current_y_curve1 += 100 * FußabdruckNutzung /100
-    x_values_curve1.append(okonomRe_i)
-    y_values_curve1.append(current_y_curve1)
+for okolog_i in range(1, 11):
+    okolog_y_temp += 100 * FußabdruckNutzung /100
+    okolog_x_values.append(okolog_i)
+    okolog_y_values.append(okolog_y_temp)
 
-    current_y_curve1 += 100
-    x_values_curve1.append(okonomRe_i)
-    y_values_curve1.append(current_y_curve1)
+    okolog_y_temp += 100
+    okolog_x_values.append(okolog_i)
+    okolog_y_values.append(okolog_y_temp)
 
 ## Re-Assembly Kurve
 
 # Initialisierung der x- und y-Werte für die zweite Kurve mit Skalierung durch Anz_ReAss
-x_values_scaled = []
-y_values_scaled = []
+okologRe_x_values = []
+okologRe_y_values = []
 
 # Startpunkt bei (0, 0)
-x_values_scaled.append(0)
-y_values_scaled.append(0)
+okologRe_x_values.append(0)
+okologRe_y_values.append(0)
 
-current_y_scaled = 100  # Der erste Sprung auf (0, 100)
-x_values_scaled.append(0)
-y_values_scaled.append(current_y_scaled)
+okologRe_y_temp = 100  # Der erste Sprung auf (0, 100)
+okologRe_x_values.append(0)
+okologRe_y_values.append(okologRe_y_temp)
 
-for okonomRe_i in range(1, int(10*Anz_ReAss) + 1):
-    current_y_scaled += 100 * FußabdruckNutzung /100 /Anz_ReAss * (1-(FußabdruckNutzungVerb / 10))
-    x_values_scaled.append(okonomRe_i/Anz_ReAss)
-    y_values_scaled.append(current_y_scaled)
+for okologRe_i in range(1, int(10*Anz_ReAss) + 1):
+    okologRe_y_temp += 100 * FußabdruckNutzung /100 /Anz_ReAss * (1-(FußabdruckNutzungVerb / 10))
+    okologRe_x_values.append(okologRe_i/Anz_ReAss)
+    okologRe_y_values.append(okologRe_y_temp)
 
-    current_y_scaled += 100 * (FußabdruckErste + FußabdruckSteigung * (okonomRe_i-1)) / 100
-    x_values_scaled.append(okonomRe_i/Anz_ReAss)
-    y_values_scaled.append(current_y_scaled)
+    okologRe_y_temp += 100 * (FußabdruckErste + FußabdruckSteigung * (okologRe_i-1)) / 100
+    okologRe_x_values.append(okologRe_i/Anz_ReAss)
+    okologRe_y_values.append(okologRe_y_temp)
 
 with st.expander("Ökologie Diagramm"):
 
@@ -84,8 +88,8 @@ with st.expander("Ökologie Diagramm"):
 
     # Hinzufügen der ersten Kurve zum Diagramm auf der primären X-Achse
     fig_plotly.add_trace(go.Scatter(
-        x=x_values_curve1,
-        y=y_values_curve1,
+        x=okolog_x_values,
+        y=okolog_y_values,
         mode="lines",
         name="Produkt mit linearer Nutzung",
         line=dict(color='darkblue')
@@ -93,8 +97,8 @@ with st.expander("Ökologie Diagramm"):
 
     # Hinzufügen der zweiten Kurve zum Diagramm auf einer sekundären X-Achse mit Skalierung durch Anz_ReAss
     fig_plotly.add_trace(go.Scatter(
-        x=x_values_scaled,
-        y=y_values_scaled,
+        x=okologRe_x_values,
+        y=okologRe_y_values,
         mode="lines",
         name="Re-Assembly Produkt",
         line=dict(color='lightgreen')
@@ -390,7 +394,7 @@ with st.expander("Ökonomie Diagramm"):
         title="Ökologie",
         xaxis=dict(title='Lineare Lebenszyklen', side='bottom', tickmode='linear', dtick=1),
         xaxis2=dict(title='Sekundäre X-Achse', side='bottom', anchor='free', position=.2),
-        yaxis=dict(title='Kumulierter Gewinn des Herstellers', showticklabels=True),
+        yaxis=dict(title='Kumulierter Gewinn des Herstellers', showticklabels=False),
         legend=dict(x=0, y=1, xanchor='left', yanchor='top'),
     )
 
