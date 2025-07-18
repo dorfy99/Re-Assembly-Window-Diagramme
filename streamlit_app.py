@@ -26,7 +26,7 @@ with st.expander("Ökonomie spezifische Merkmale"):
         KostenErste = st.slider('Kosten der 1. Re-Assembly bezogen auf die Kosten einer Neuproduktion [%]', min_value=0, max_value=100, value=10, format="%d %%")
         KostenSteigung = st.slider('Steigung der Kosten von einer Re-Assembly zur nächsten [%-punkte]', min_value=0, max_value=50, value=10, format="%d %%")
         Subskription = st.number_input('Höhe der Subskriptionserlöse in einem linearen Lebenszyklus bezogen auf den Verkaufserlös eines linearen Produkts [%]', min_value=0, value=120)
-       
+        Marge = st.slider('Marge: Anteil der Herstellungskosten am Verkaufspreis [%]', min_value=0, max_value=100, value=60, format="%d %%")
        
 
 
@@ -314,6 +314,8 @@ with st.expander("Kundennutzen Diagramm"):
 ### Ökonomie Diagramm
 
 ## Lineare Kurve Ökonomie
+# Berechnung Gewinn pro Verkauf
+okonom_gewinn=100/(Marge/100) - 100
 
 # Initialisierung der x- und y-Werte für die erste Kurve
 okonom_x_values = []
@@ -323,7 +325,7 @@ okonom_y_values = []
 okonom_x_values.append(0)
 okonom_y_values.append(0)
 
-okonom_current_y = 50  # Der erste Sprung auf (0, 100)
+okonom_current_y = okonom_gewinn  # Der erste Sprung bei x=0
 okonom_x_values.append(0)
 okonom_y_values.append(okonom_current_y)
 
@@ -334,7 +336,7 @@ for okonomRe_i in range(1, 11):
     okonom_y_values.append(okonom_current_y)
 
     #Sprung bei Neukauf
-    okonom_current_y += 100
+    okonom_current_y += okonom_gewinn
     okonom_x_values.append(okonomRe_i)
     okonom_y_values.append(okonom_current_y)
 
@@ -354,7 +356,7 @@ okonomRe_y_values.append(okonomRe_current_y_scaled)
 
 # lineare Steigung durch Subskription
 for okonomRe_i in range(1, int(10*Anz_ReAss) + 1):
-    okonomRe_current_y_scaled += 150 * (Subskription/100) / Anz_ReAss
+    okonomRe_current_y_scaled += (100+okonom_gewinn) * (Subskription/100) / Anz_ReAss
     okonomRe_x_values.append(okonomRe_i/Anz_ReAss)
     okonomRe_y_values.append(okonomRe_current_y_scaled)
 
@@ -388,7 +390,7 @@ with st.expander("Ökonomie Diagramm"):
         title="Ökologie",
         xaxis=dict(title='Lineare Lebenszyklen', side='bottom', tickmode='linear', dtick=1),
         xaxis2=dict(title='Sekundäre X-Achse', side='bottom', anchor='free', position=.2),
-        yaxis=dict(title='Kumulierter Gewinn des Herstellers', showticklabels=False),
+        yaxis=dict(title='Kumulierter Gewinn des Herstellers', showticklabels=True),
         legend=dict(x=0, y=1, xanchor='left', yanchor='top'),
     )
 
