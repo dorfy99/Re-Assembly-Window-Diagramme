@@ -248,6 +248,7 @@ with st.expander("Ökologie Diagramm"):
         st.markdown(f"""
             <div style="text-align: center; white-space: nowrap;">
                 <strong>🔄 Optimaler Abbruchzeitpunkt</strong><br>
+                <span style="font-size: 14px;">nach</span>
                 <span style="font-size: 24px;">{okolog_sweetspot}</span>
                 <span style="font-size: 14px;">Re-Assemblys</span>
             </div>
