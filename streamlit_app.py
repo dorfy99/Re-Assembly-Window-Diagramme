@@ -109,6 +109,10 @@ df_interpolated = pd.DataFrame(okonom_data)
 # Sweetspot = Maximaler positiver Wert in 'Differenz' finden 
 okolog_diff_max = df_interpolated[df_interpolated['Differenz'] == df_interpolated['Differenz'].max()]['x'].values[0]
 okolog_sweetspot = int(okolog_diff_max*Anz_ReAss)
+okolog_neustart_y_value = 0
+for i in range(len(okologRe_x_values)):
+    if okologRe_x_values[i] == (okolog_sweetspot)/Anz_ReAss :
+        okolog_neustart_y_value = okologRe_y_values[i]
 
 # Werte für Sweetspot indikator linie
 okolog_sweetspot_marker_x_values = [okolog_sweetspot/Anz_ReAss, okolog_diff_max, okolog_diff_max]
@@ -146,8 +150,12 @@ if max_pos_to_neg_x is None:
 else:
     okonom_fenster_high = int(max_pos_to_neg_x * Anz_ReAss)
 
-# Diagramm anzeigen
+# Verlauf bei Neustart am optimalen Zeitpunkt zeigen
+okologRe_neustart_x_values = [x + (int(okolog_sweetspot/Anz_ReAss)+(1/Anz_ReAss)) for x in okologRe_x_values]
+okologRe_neustart_y_values = [y + okolog_neustart_y_value for y in okologRe_y_values]
 
+
+# Diagramm anzeigen
 with st.expander("Ökologie Diagramm"):
 
     fig_okolog_plotly = go.Figure()
@@ -169,6 +177,16 @@ with st.expander("Ökologie Diagramm"):
         name="Re-Assembly Produkt",
         line=dict(color='lightgreen')
     ))
+
+    # Hinzufügen der Re-Assembly kurve nach dem optimalen Abbruch
+    fig_okolog_plotly.add_trace(go.Scatter(
+        x=okologRe_neustart_x_values,
+        y=okologRe_neustart_y_values,
+        mode="lines",
+        name="Re-Assembly Produkt: Zweiter Kreislauf",
+        line=dict(dash='dot', color='lightgreen')
+    ))
+
 
     # Fenster Bereich plotten
     fig_okolog_plotly.add_shape(type="rect",
