@@ -189,7 +189,6 @@ with st.expander("Ökologie Diagramm"):
         showlegend=False))
     
     # Füge eine Annotation hinzu mit einem Smiley und einer Krone (Unicode)
-    Restart = "🔄" # Unicode für Krone und Smiley
     fig_okolog_plotly.add_annotation(
         x=okolog_diff_max,
         y=max(max(okolog_y_values), max(okologRe_y_values))*0.9,
@@ -214,13 +213,13 @@ with st.expander("Ökologie Diagramm"):
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        st.metric(label="Untere Fenstergrenze", value=f"{okonom_fenster_low} Re-Assemblys")
+        st.metric(label="➡️ Untere Fenstergrenze", value=f"{okonom_fenster_low} Re-Assemblys")
 
     with col2:
-        st.metric(label="Optimaler Abbruchzeitpunkt nach", value=f"{okolog_sweetspot} Re-Assemblys")
+        st.metric(label="🔄 Optimaler Abbruchzeitpunkt", value=f"{okolog_sweetspot} Re-Assemblys")
 
     with col3:
-        st.metric(label="Obere Fenstergrenze", value=f"{okonom_fenster_high} Re-Assemblys")
+        st.metric(label="⬅️ Obere Fenstergrenze", value=f"{okonom_fenster_high} Re-Assemblys")
 
 
 
