@@ -82,37 +82,7 @@ for okologRe_i in range(1, int(10*Anz_ReAss) + 1):
     okologRe_x_values.append(okologRe_i/Anz_ReAss)
     okologRe_y_values.append(okologRe_y_temp)
 
-with st.expander("Ökologie Diagramm"):
 
-    fig_plotly = go.Figure()
-
-    # Hinzufügen der ersten Kurve zum Diagramm auf der primären X-Achse
-    fig_plotly.add_trace(go.Scatter(
-        x=okolog_x_values,
-        y=okolog_y_values,
-        mode="lines",
-        name="Produkt mit linearer Nutzung",
-        line=dict(color='darkblue')
-    ))
-
-    # Hinzufügen der zweiten Kurve zum Diagramm auf einer sekundären X-Achse mit Skalierung durch Anz_ReAss
-    fig_plotly.add_trace(go.Scatter(
-        x=okologRe_x_values,
-        y=okologRe_y_values,
-        mode="lines",
-        name="Re-Assembly Produkt",
-        line=dict(color='lightgreen')
-    ))
-
-    fig_plotly.update_layout(
-        title="Ökologie",
-        xaxis=dict(title='Lineare Lebenszyklen', side='bottom', tickmode='linear', dtick=1),
-        xaxis2=dict(title='Sekundäre X-Achse', side='bottom', anchor='free', position=0.2),
-        yaxis=dict(title='Kumulierter ökologischer Fußabdruck', showticklabels=False),
-        legend=dict(x=0, y=1, xanchor='left', yanchor='top'),
-    )
-
-    st.plotly_chart(fig_plotly)
 
 
 ## Berechnung von Sweetspot und Fenster-Grenzen
@@ -136,52 +106,121 @@ okonom_data = {
 }
 df_interpolated = pd.DataFrame(okonom_data)
 
-# Maximaler positiver Wert in 'Differenz' finden
+# Sweetspot = Maximaler positiver Wert in 'Differenz' finden 
 okolog_diff_max = df_interpolated[df_interpolated['Differenz'] == df_interpolated['Differenz'].max()]['x'].values[0]
 okolog_sweetspot = int(okolog_diff_max*Anz_ReAss)
+
+# Werte für Sweetspot indikator linie
+okolog_sweetspot_marker_x_values = [okolog_sweetspot/Anz_ReAss, okolog_diff_max, okolog_diff_max]
+okolog_sweetspot_marker_y_values = [0, 100, max(max(okolog_y_values), max(okologRe_y_values))*0.9]
+
 # Vorzeichenwechsel finden
-sign_change_x_values = df_interpolated[df_interpolated['Differenz'].shift() * df_interpolated['Differenz'] < 0] ['x'].values[0]
+# Initialisierung für die Suche nach Vorzeichenwechseln
+min_neg_to_pos_x = None
+max_pos_to_neg_x = None
 
-st.write("X-Wert mit maximalem positivem Differenz:", okolog_diff_max)
-st.write("optimaler Neustartzeitpunkt nach ... Re-Assemblys", okolog_sweetspot)
-st.write("X-Werte mit Vorzeichenwechsel:", sign_change_x_values)
+for i in range(1, len(df_interpolated)):
+    previous_value = df_interpolated['Differenz'].iloc[i-1]
+    current_value = df_interpolated['Differenz'].iloc[i]
+    
+    if previous_value < 0 and current_value > 0:
+        # Wechsel von negativ zu positiv
+        if min_neg_to_pos_x is None or df_interpolated['x'].iloc[i] < min_neg_to_pos_x:
+            min_neg_to_pos_x = df_interpolated['x'].iloc[i]
+    
+    elif previous_value > 0 and current_value < 0:
+        # Wechsel von positiv zu negativ
+        if max_pos_to_neg_x is None or df_interpolated['x'].iloc[i] > max_pos_to_neg_x:
+            max_pos_to_neg_x = df_interpolated['x'].iloc[i]
 
-# Plotten der Tabelle mit Streamlit
-st.write("Interpolierte Werte:")
-st.dataframe(df_interpolated)
+# Fenstergrenzen berechnen
+if min_neg_to_pos_x is None:
+    okonom_fenster_low = 1
+    min_neg_to_pos_x = 1/Anz_ReAss
+else:
+    okonom_fenster_low = int(min_neg_to_pos_x * Anz_ReAss)
+
+if max_pos_to_neg_x is None:
+    okonom_fenster_high = "unendlich"
+    max_pos_to_neg_x = 10
+else:
+    okonom_fenster_high = int(max_pos_to_neg_x * Anz_ReAss)
+
+# Diagramm anzeigen
+
+with st.expander("Ökologie Diagramm"):
+
+    fig_okolog_plotly = go.Figure()
+
+    # Hinzufügen der ersten Kurve zum Diagramm auf der primären X-Achse
+    fig_okolog_plotly.add_trace(go.Scatter(
+        x=okolog_x_values,
+        y=okolog_y_values,
+        mode="lines",
+        name="Produkt mit linearer Nutzung",
+        line=dict(color='darkblue')
+    ))
+
+    # Hinzufügen der zweiten Kurve zum Diagramm auf einer sekundären X-Achse mit Skalierung durch Anz_ReAss
+    fig_okolog_plotly.add_trace(go.Scatter(
+        x=okologRe_x_values,
+        y=okologRe_y_values,
+        mode="lines",
+        name="Re-Assembly Produkt",
+        line=dict(color='lightgreen')
+    ))
+
+    # Fenster Bereich plotten
+    fig_okolog_plotly.add_shape(type="rect",
+                x0=min_neg_to_pos_x, x1=max_pos_to_neg_x,
+                y0=0,
+                y1=max(max(okolog_y_values), max(okologRe_y_values)),
+                fillcolor="orange",
+                opacity=0.1,
+                layer="below",
+                line_width=0)
+    
+    # Sweetspot Indikator plotten
+    fig_okolog_plotly.add_trace(go.Scatter(
+        x=okolog_sweetspot_marker_x_values,
+        y=okolog_sweetspot_marker_y_values,
+        mode='lines',
+        line=dict(color="red", width=2),
+        showlegend=False))
+    
+    # Füge eine Annotation hinzu mit einem Smiley und einer Krone (Unicode)
+    Restart = "🔄" # Unicode für Krone und Smiley
+    fig_okolog_plotly.add_annotation(
+        x=okolog_diff_max,
+        y=max(max(okolog_y_values), max(okologRe_y_values))*0.9,
+        text="🔄",
+        showarrow=False,
+        font=dict(size=20),
+    )
+
+    fig_okolog_plotly.update_layout(
+        title="Ökologie",
+        xaxis=dict(title='Lineare Lebenszyklen', side='bottom', tickmode='linear', dtick=1, range=[0, int(max_pos_to_neg_x)+1.01]),
+        xaxis2=dict(title='Sekundäre X-Achse', side='bottom', anchor='free', position=0.2),
+        yaxis=dict(title='Kumulierter ökologischer Fußabdruck', showticklabels=False),
+        legend=dict(x=0, y=1, xanchor='left', yanchor='top', bgcolor='rgba(0,0,0,0)'),
+    )
 
 
-## Sicherstellen, dass alle Listen die gleiche Länge haben
-# min_length = min(len(x_values_scaled), len(y_values_scaled), len(y_values_curve1))
 
-# # Kürzen der Listen auf die minimale Länge
-# x_values_scaled = x_values_scaled[:min_length]
-# y_values_scaled = y_values_scaled[:min_length]
-# y_values_curve1 = y_values_curve1[:min_length]
+    st.plotly_chart(fig_okolog_plotly)
 
-# # Berechnung der Differenzen
-# differenzen = [curve1 - scaled for curve1, scaled in zip(y_values_curve1, y_values_scaled)]
+    # Fenster und Sweetspot anzeigen
+    col1, col2, col3 = st.columns(3)
 
-# # Erstellen des DataFrames mit den x-Werten der skalierten Kurve und den entsprechenden y-Werten
-# data = {
-#     "X-Werte (Scaled)": x_values_scaled,
-#     "Y-Werte (Scaled)": y_values_scaled,
-#     "Y-Werte (Curve1)": y_values_curve1,
-#     "Differenz": differenzen
-# }
+    with col1:
+        st.metric(label="Untere Fenstergrenze", value=f"{okonom_fenster_low} Re-Assemblys")
 
-# df = pd.DataFrame(data)
+    with col2:
+        st.metric(label="Optimaler Abbruchzeitpunkt nach", value=f"{okolog_sweetspot} Re-Assemblys")
 
-# # Anzeige als Streamlit-Tabelle
-# st.table(df)
-
-# # Ermittlung des Index mit dem höchsten Differenzwert
-# max_diff_index = df['Differenz'].idxmax()
-
-# # Ausgabe des entsprechenden X-Werts
-# max_diff_x_value = df.at[max_diff_index, 'X-Werte (Scaled)']
-# st.write(f"Der X-Wert mit der höchsten Differenz ist: {max_diff_x_value}")
-# st.metric("Sweetspot nach ... Re-Assemblys", int(max_diff_x_value))
+    with col3:
+        st.metric(label="Obere Fenstergrenze", value=f"{okonom_fenster_high} Re-Assemblys")
 
 
 
@@ -346,7 +385,7 @@ with st.expander("Kundennutzen Diagramm"):
         xaxis=dict(title='Lineare Lebenszyklen', side='bottom', tickmode='linear', dtick=1),
         xaxis2=dict(title='Sekundäre X-Achse', side='bottom', anchor='free', position=0.2),
         yaxis=dict(title='Kundennutzen', showticklabels=False),
-        legend=dict(x=0, y=1, xanchor='left', yanchor='top'),
+        legend=dict(x=0, y=1, xanchor='left', yanchor='top', bgcolor='rgba(0,0,0,0)'),
     )
 
     st.plotly_chart(fig_kunde_plotly)
@@ -431,7 +470,7 @@ with st.expander("Ökonomie Diagramm"):
         xaxis=dict(title='Lineare Lebenszyklen', side='bottom', tickmode='linear', dtick=1),
         xaxis2=dict(title='Sekundäre X-Achse', side='bottom', anchor='free', position=.2),
         yaxis=dict(title='Kumulierter Gewinn des Herstellers', showticklabels=False),
-        legend=dict(x=0, y=1, xanchor='left', yanchor='top'),
+        legend=dict(x=0, y=1, xanchor='left', yanchor='top', bgcolor='rgba(0,0,0,0)'),
     )
 
     st.plotly_chart(fig_okonom_plotly)
