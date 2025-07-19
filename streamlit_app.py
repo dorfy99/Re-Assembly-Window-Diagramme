@@ -231,13 +231,31 @@ with st.expander("Ökologie Diagramm"):
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        st.metric(label="➡️ Untere Fenstergrenze", value=f"{okonom_fenster_low} Re-Assemblys")
+        st.markdown(f"""
+            <div style="text-align: center; white-space: nowrap;">
+                <strong>➡️ Untere Fenstergrenze</strong><br>
+                <span style="font-size: 24px;">{okonom_fenster_low}</span>
+                <span style="font-size: 14px;">Re-Assemblys</span>
+            </div>
+        """, unsafe_allow_html=True)
 
     with col2:
-        st.metric(label="🔄 Optimaler Abbruchzeitpunkt", value=f"{okolog_sweetspot} Re-Assemblys")
+        st.markdown(f"""
+            <div style="text-align: center; white-space: nowrap;">
+                <strong>🔄 Optimaler Abbruchzeitpunkt</strong><br>
+                <span style="font-size: 24px;">{okolog_sweetspot}</span>
+                <span style="font-size: 14px;">Re-Assemblys</span>
+            </div>
+        """, unsafe_allow_html=True)
 
     with col3:
-        st.metric(label="⬅️ Obere Fenstergrenze", value=f"{okonom_fenster_high} Re-Assemblys")
+        st.markdown(f"""
+            <div style="text-align: center; white-space: nowrap;">
+                <strong>⬅️ Obere Fenstergrenze</strong><br>
+                <span style="font-size: 24px;">{okonom_fenster_high}</span>
+                <span style="font-size: 14px;">Re-Assemblys</span>
+            </div>
+        """, unsafe_allow_html=True)
 
 
 
