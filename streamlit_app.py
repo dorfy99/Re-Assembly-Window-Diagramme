@@ -145,7 +145,7 @@ if max_pos_to_neg_x is None:
     okonom_fenster_high = "unendlich"
     max_pos_to_neg_x = 10
 else:
-    okonom_fenster_high = int(max_pos_to_neg_x * Anz_ReAss)
+    okonom_fenster_high = int(max_pos_to_neg_x * Anz_ReAss -1)
 
 okolog_xWindow_max_y_value = 0
 for i in range(len(okolog_x_values)):
