@@ -114,9 +114,6 @@ for i in range(len(okologRe_x_values)):
     if okologRe_x_values[i] == (okolog_sweetspot)/Anz_ReAss :
         okolog_neustart_y_value = okologRe_y_values[i]
 
-# Werte für Sweetspot indikator linie
-okolog_sweetspot_marker_x_values = [okolog_sweetspot/Anz_ReAss, okolog_diff_max, okolog_diff_max]
-okolog_sweetspot_marker_y_values = [0, 100, max(max(okolog_y_values), max(okologRe_y_values))*0.9]
 
 # Vorzeichenwechsel finden
 # Initialisierung für die Suche nach Vorzeichenwechseln
@@ -149,6 +146,11 @@ if max_pos_to_neg_x is None:
     max_pos_to_neg_x = 10
 else:
     okonom_fenster_high = int(max_pos_to_neg_x * Anz_ReAss)
+
+okolog_xWindow_max_y_value = 0
+for i in range(len(okolog_x_values)):
+    if okolog_x_values[i] == int(max_pos_to_neg_x+1) :
+        okolog_xWindow_max_y_value = okolog_y_values[i]
 
 # Verlauf bei Neustart am optimalen Zeitpunkt zeigen
 okologRe_neustart_x_values = [x + (int(okolog_sweetspot/Anz_ReAss)+(1/Anz_ReAss)) for x in okologRe_x_values]
@@ -199,6 +201,9 @@ with st.expander("Ökologie Diagramm"):
                 line_width=0)
     
     # Sweetspot Indikator plotten
+        # Werte für Sweetspot indikator linie
+    okolog_sweetspot_marker_x_values = [okolog_sweetspot/Anz_ReAss, okolog_diff_max, okolog_diff_max]
+    okolog_sweetspot_marker_y_values = [0, 100, okolog_xWindow_max_y_value]
     fig_okolog_plotly.add_trace(go.Scatter(
         x=okolog_sweetspot_marker_x_values,
         y=okolog_sweetspot_marker_y_values,
@@ -209,7 +214,7 @@ with st.expander("Ökologie Diagramm"):
     # Füge eine Annotation hinzu mit einem Smiley und einer Krone (Unicode)
     fig_okolog_plotly.add_annotation(
         x=okolog_diff_max,
-        y=max(max(okolog_y_values), max(okologRe_y_values))*0.9,
+        y=okolog_xWindow_max_y_value,
         text="🔄",
         showarrow=False,
         font=dict(size=20),
@@ -219,7 +224,7 @@ with st.expander("Ökologie Diagramm"):
         title="Ökologie",
         xaxis=dict(title='Lineare Lebenszyklen', side='bottom', tickmode='linear', dtick=1, range=[0, int(max_pos_to_neg_x)+1.01]),
         xaxis2=dict(title='Sekundäre X-Achse', side='bottom', anchor='free', position=0.2),
-        yaxis=dict(title='Kumulierter ökologischer Fußabdruck', showticklabels=False),
+        yaxis=dict(title='Kumulierter ökologischer Fußabdruck', showticklabels=False, range=[0, okolog_xWindow_max_y_value*1.2]),
         legend=dict(x=0, y=1, xanchor='left', yanchor='top', bgcolor='rgba(0,0,0,0)'),
     )
 
