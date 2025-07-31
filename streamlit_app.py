@@ -7,7 +7,6 @@ from scipy.interpolate import interp1d
 
 st.title('Simulationstool zur Re-Wind-Analyse spezifischer Produkte')
 
-
 with st.sidebar:
 
        
@@ -37,13 +36,14 @@ with st.sidebar:
             Marge = st.slider('Marge: Anteil der Herstellungskosten am Verkaufspreis [%]', min_value=0, max_value=100, value=60, format="%d %%")
 
     st.divider(width="stretch")
-    
+
 st.sidebar.button("PDF Bericht erstellen")            
    
 
 
 st.divider(width="stretch")
-st.subheader('... und Fenster & Sweetspot Diagramme anzeigen lassen')
+st.subheader('Einfach in der Sidebar (links) produktspezifische Merkamale eingeben ...')
+st.subheader('... und Re-Wind Diagramme anzeigen lassen')
 
 ### Ökologie Diagramm
 
