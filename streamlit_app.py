@@ -7,28 +7,39 @@ from scipy.interpolate import interp1d
 
 st.title('Simulationstool zur Re-Wind-Analyse spezifischer Produkte')
 
-st.divider(width="stretch")
-st.subheader('Einfach produktspezifische Merkamale eingeben ...')
 
-# Erstellen von 9 individuellen Slidern mit Titeln und ausklappbaren Abschnitten
+with st.sidebar:
 
-Anz_ReAss = st.slider('Anzahl Re-Assemblys je linearem Lebenszyklus', min_value=1, max_value=5, value=2)
-
-with st.expander("Ökologie spezifische Merkmale"):
-        FußabdruckErste = st.slider('Fußabdruck der 1. Re-Assembly bezogen auf den Fußabdruck einer Neuproduktion [%]', min_value=0, max_value=100, value=10, format="%d %%")
-        FußabdruckSteigung = st.slider('Steigung des Fußabdrucks von einer Re-Assembly zur nächsten  [%-punkte]', min_value=0, max_value=50, value=10, format="%d %%")
-        FußabdruckNutzung = st.number_input('Fußabdruck der Nutzung bezogen auf den Fußabdruck der Neuproduktion [%]', min_value=0, value=50)
-        FußabdruckNutzungVerb = st.slider('Vorzeitige Effizienzsteigerung durch Re-Assembly  [0 = nicht vorhanden - 10 = sehr stark]', min_value=0, max_value=10, value=5)
-
-with st.expander("Kundennutzen spezifische Merkmale"):
-    Innovation = st.slider('Särke des Innovationsrückgangs [0 = nicht vorhanden - 10 = sehr stark]', min_value=0, max_value=10, value=5)
-    
-with st.expander("Ökonomie spezifische Merkmale"):
-        KostenErste = st.slider('Kosten der 1. Re-Assembly bezogen auf die Kosten einer Neuproduktion [%]', min_value=0, max_value=100, value=10, format="%d %%")
-        KostenSteigung = st.slider('Steigung der Kosten von einer Re-Assembly zur nächsten [%-punkte]', min_value=0, max_value=50, value=10, format="%d %%")
-        Subskription = st.number_input('Höhe der Subskriptionserlöse in einem linearen Lebenszyklus bezogen auf den Verkaufserlös eines linearen Produkts [%]', min_value=0, value=120)
-        Marge = st.slider('Marge: Anteil der Herstellungskosten am Verkaufspreis [%]', min_value=0, max_value=100, value=60, format="%d %%")
        
+    st.subheader('Hier einfach produktspezifische Merkamale eingeben ...')
+
+    # Erstellen von 9 individuellen Slidern mit Titeln und ausklappbaren Abschnitten
+
+    Anz_ReAss = st.slider('Anzahl Re-Assemblys je linearem Lebenszyklus', min_value=1, max_value=5, value=2)
+
+    with st.expander("Ökologie spezifische Merkmale"):
+            FußabdruckErste = st.slider('Fußabdruck der 1. Re-Assembly bezogen auf den Fußabdruck einer Neuproduktion [%]', min_value=0, max_value=100, value=10, format="%d %%")
+            FußabdruckSteigung = st.slider('Steigung des Fußabdrucks von einer Re-Assembly zur nächsten  [%-punkte]', min_value=0, max_value=50, value=10, format="%d %%")
+            FußabdruckZweite = st.slider('Fußabdruck der 1. großen Re-Assembly bezogen auf die Kosten einer Neuproduktion [%]', min_value=0, max_value=100, value=40, format="%d %%")
+            FußabdruckZweiteSteigung = st.slider ('Steigung des Fußabdrucks von einer großen Re-Assembly zur nächsten [%-punkte]', min_value=0, max_value=50, value=5, format="%d %%")
+            FußabdruckNutzung = st.number_input('Fußabdruck der Nutzung bezogen auf den Fußabdruck der Neuproduktion [%]', min_value=0, value=50)
+            FußabdruckNutzungVerb = st.slider('Vorzeitige Effizienzsteigerung durch Re-Assembly  [0 = nicht vorhanden - 10 = sehr stark]', min_value=0, max_value=10, value=5)
+
+    with st.expander("Kundennutzen spezifische Merkmale"):
+        Innovation = st.slider('Särke des Innovationsrückgangs [0 = nicht vorhanden - 10 = sehr stark]', min_value=0, max_value=10, value=5)
+        
+    with st.expander("Ökonomie spezifische Merkmale"):
+            KostenErste = st.slider('Kosten der 1. kleinen Re-Assembly bezogen auf die Kosten einer Neuproduktion [%]', min_value=0, max_value=100, value=10, format="%d %%")
+            KostenSteigung = st.slider('Steigung der Kosten von einer kleinen Re-Assembly zur nächsten [%-punkte]', min_value=0, max_value=50, value=5, format="%d %%")
+            KostenZweite = st.slider('Kosten der 1. großen Re-Assembly bezogen auf die Kosten einer Neuproduktion [%]', min_value=0, max_value=100, value=40, format="%d %%")
+            KostenZweiteSteigung = st.slider ('Steigung der Kosten von einer großen Re-Assembly zur nächsten [%-punkte]', min_value=0, max_value=50, value=5, format="%d %%")
+            Subskription = st.number_input('Höhe der Subskriptionserlöse in einem linearen Lebenszyklus bezogen auf den Verkaufserlös eines linearen Produkts [%]', min_value=0, value=120)
+            Marge = st.slider('Marge: Anteil der Herstellungskosten am Verkaufspreis [%]', min_value=0, max_value=100, value=60, format="%d %%")
+
+    st.divider(width="stretch")
+    
+st.sidebar.button("PDF Bericht erstellen")            
+   
 
 
 st.divider(width="stretch")
@@ -78,10 +89,16 @@ for okologRe_i in range(1, int(10*Anz_ReAss) + 1):
     okologRe_x_values.append(okologRe_i/Anz_ReAss)
     okologRe_y_values.append(okologRe_y_temp)
 
-    okologRe_y_temp += 100 * (FußabdruckErste + FußabdruckSteigung * (okologRe_i-1)) / 100
-    okologRe_x_values.append(okologRe_i/Anz_ReAss)
-    okologRe_y_values.append(okologRe_y_temp)
-
+    if okologRe_i % 2 != 0 :
+        okologRe_y_temp += 100 * (FußabdruckErste + FußabdruckSteigung * (okologRe_i-1)) / 100
+        okologRe_x_values.append(okologRe_i/Anz_ReAss)
+        okologRe_y_values.append(okologRe_y_temp)
+        #großer Sprung durch Re-Assembly    
+    
+    else: 
+        okologRe_y_temp +=100* (FußabdruckZweite+FußabdruckZweiteSteigung*pow(2,((okologRe_i-2)/10))*((okologRe_i-2)/2))/100
+        okologRe_x_values.append(okologRe_i/Anz_ReAss) 
+        okologRe_y_values.append(okologRe_y_temp) 
 
 
 
@@ -194,12 +211,30 @@ with st.expander("Ökologie Diagramm"):
     fig_okolog_plotly.add_shape(type="rect",
                 x0=min_neg_to_pos_x, x1=max_pos_to_neg_x,
                 y0=0,
-                y1=max(max(okolog_y_values), max(okologRe_y_values)),
+                y1=okolog_xWindow_max_y_value,
                 fillcolor="orange",
                 opacity=0.1,
                 layer="below",
                 line_width=0)
     
+    # Füge ein Icon zur linken Grenze hinzu
+    fig_okolog_plotly.add_annotation(
+        x=min_neg_to_pos_x,
+        y=okolog_xWindow_max_y_value*0.5,
+        text="➡️",
+        showarrow=False,
+        font=dict(size=15),
+    )
+
+        # Füge ein Icon zur rechten Grenze hinzu
+    fig_okolog_plotly.add_annotation(
+        x=max_pos_to_neg_x,
+        y=okolog_xWindow_max_y_value*0.5,
+        text="⬅️",
+        showarrow=False,
+        font=dict(size=15),
+    )
+
     # Sweetspot Indikator plotten
         # Werte für Sweetspot indikator linie
     okolog_sweetspot_marker_x_values = [okolog_sweetspot/Anz_ReAss, okolog_diff_max, okolog_diff_max]
@@ -211,7 +246,7 @@ with st.expander("Ökologie Diagramm"):
         line=dict(color="red", width=2),
         showlegend=False))
     
-    # Füge eine Annotation hinzu mit einem Smiley und einer Krone (Unicode)
+    # Füge ein Icon hinzu zum Neustartzeitpunkt
     fig_okolog_plotly.add_annotation(
         x=okolog_diff_max,
         y=okolog_xWindow_max_y_value,
@@ -247,7 +282,7 @@ with st.expander("Ökologie Diagramm"):
     with col2:
         st.markdown(f"""
             <div style="text-align: center; white-space: nowrap;">
-                <strong>🔄 Optimaler Abbruchzeitpunkt</strong><br>
+                <strong>🔄 Optimaler Neustartpunkt</strong><br>
                 <span style="font-size: 14px;">nach</span>
                 <span style="font-size: 24px;">{okolog_sweetspot}</span>
                 <span style="font-size: 14px;">Re-Assemblys</span>
@@ -470,20 +505,27 @@ okonomRe_y_values = []
 okonomRe_x_values.append(0)
 okonomRe_y_values.append(0)
 
-okonomRe_current_y_scaled = -100   # Der erste Sprung auf (0,-100)
+okonomRe_y_temp = -100   # Der erste Sprung auf (0,-100)
 okonomRe_x_values.append(0)
-okonomRe_y_values.append(okonomRe_current_y_scaled)
+okonomRe_y_values.append(okonomRe_y_temp)
 
 # lineare Steigung durch Subskription
 for okonomRe_i in range(1, int(10*Anz_ReAss) + 1):
-    okonomRe_current_y_scaled += (100+okonom_gewinn) * (Subskription/100) / Anz_ReAss
+    okonomRe_y_temp += (100+okonom_gewinn) * (Subskription/100) / Anz_ReAss
     okonomRe_x_values.append(okonomRe_i/Anz_ReAss)
-    okonomRe_y_values.append(okonomRe_current_y_scaled)
+    okonomRe_y_values.append(okonomRe_y_temp)
 
-    #Sprung durch Re-Assembly
-    okonomRe_current_y_scaled -=100* (KostenErste+KostenSteigung*(okonomRe_i-1))/100
-    okonomRe_x_values.append(okonomRe_i/Anz_ReAss) 
-    okonomRe_y_values.append(okonomRe_current_y_scaled) 
+    #kleiner Sprung durch Re-Assembly
+    if okonomRe_i % 2 != 0:
+        okonomRe_y_temp -=100* (KostenErste+KostenSteigung*((okonomRe_i-1)/2))/100
+        okonomRe_x_values.append(okonomRe_i/Anz_ReAss) 
+        okonomRe_y_values.append(okonomRe_y_temp) 
+
+    #großer Sprung durch Re-Assembly    
+    else: 
+        okonomRe_y_temp -=100* (KostenZweite+KostenZweiteSteigung*pow(2,((okonomRe_i-2)/8))*((okonomRe_i-2)/2))/100
+        okonomRe_x_values.append(okonomRe_i/Anz_ReAss) 
+        okonomRe_y_values.append(okonomRe_y_temp) 
 
 with st.expander("Ökonomie Diagramm"):
 
