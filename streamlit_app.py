@@ -5,7 +5,8 @@ import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
 
-st.title('Simulationstool zur Re-Wind-Analyse spezifischer Produkte')
+
+#### Sidebar mit Datenaufnahme 
 
 with st.sidebar:
 
@@ -38,9 +39,10 @@ with st.sidebar:
     st.divider(width="stretch")
 
 st.sidebar.button("PDF Bericht erstellen")            
-   
 
+#### Hauptansicht mit Diagrammen
 
+st.title('Simulationstool zur Re-Wind-Analyse spezifischer Produkte')
 st.divider(width="stretch")
 st.subheader('Einfach in der Sidebar (links) produktspezifische Merkamale eingeben ...')
 st.subheader('... und Re-Wind Diagramme anzeigen lassen')
@@ -549,7 +551,7 @@ with st.expander("Ökonomie Diagramm"):
 
 
     fig_okonom_plotly.update_layout(
-        title="Ökologie",
+        title="Ökonomie",
         xaxis=dict(title='Lineare Lebenszyklen', side='bottom', tickmode='linear', dtick=1),
         xaxis2=dict(title='Sekundäre X-Achse', side='bottom', anchor='free', position=.2),
         yaxis=dict(title='Kumulierter Gewinn des Herstellers', showticklabels=False),
