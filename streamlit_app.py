@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
+import time
 
 
 #### Sidebar mit Datenaufnahme 
@@ -571,12 +572,12 @@ from reportlab.lib.units import cm
 
 # Funktion zum Erstellen des PDFs
 def create_pdf(product_name):
-    file_path = "output.pdf"
-    c = canvas.Canvas(file_path, pagesize=A4)  # A4-Größe in cm
+    pdf_file_path = f"output_{timestamp}.pdf"
+    c = canvas.Canvas(pdf_file_path, pagesize=A4)  # A4-Größe in cm
     width, height = A4
     
     # Titel
-    c.setFont("Helvetica-Bold", 16)
+    c.setFont("Helvetica-Bold", 30)
     c.drawString(2 * cm, height - 7 * cm, f"Re-Wind Analyse zum Produkt: {product_name}")
     
     # Untertitel: Annahmen zu den Produkteigenschaften
@@ -661,9 +662,8 @@ def create_pdf(product_name):
         
         # c.rect(logo_x,y_contact_start,width-logo_placeholder_width,height)
 
-        print(f"PDF wurde erstellt: {file_path}")  
       
-    return file_path
+    return pdf_file_path
 
 
 
@@ -678,7 +678,7 @@ def product_dialog():
 
             if pdf_file_path:
                 with open(pdf_file_path, "rb") as pdf_file:
-                    st.download_button("Download PDF", pdf_file, file_name="output.pdf", mime='application/pdf')
+                    st.download_button("Download PDF", pdf_file, file_name="output2.pdf", mime='application/pdf')
         else:
             st.warning("Bitte geben Sie einen Namen ein.")
 
