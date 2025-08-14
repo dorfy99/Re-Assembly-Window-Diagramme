@@ -303,6 +303,32 @@ with st.expander("Ökologie Diagramm"):
 # Digramm als Bild speichern
 fig_okolog_plotly.write_image("Oekologie_Diagramm.png")
 
+# PDF erstellen
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+
+def create_pdf():
+    c = canvas.Canvas("output.pdf", pagesize=letter)
+    width, height = letter
+    
+    # Kopfzeile hinzufügen
+    c.drawString(100, height - 50, "Kopfzeile")
+    
+    # Diagrammbild hinzufügen
+    c.drawImage("Oekologie_Diagramm.png", 100, height - 400)  # Position anpassen
+    
+    # Fußzeile hinzufügen
+    c.drawString(100, 30, "Fußzeile")
+    
+    c.save()
+
+create_pdf()
+
+if st.button('PDF exportieren'):
+    create_pdf()
+    st.success('PDF wurde erfolgreich erstellt!')
+
+
 #### Kundennutzen Diagramm Lineares Produkt
 
 # Initialisierung der x- und y-Werte für den Graphen
