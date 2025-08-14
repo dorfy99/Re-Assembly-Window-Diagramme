@@ -300,7 +300,8 @@ with st.expander("Ökologie Diagramm"):
             </div>
         """, unsafe_allow_html=True)
 
-
+# Digramm als Bild speichern
+fig_okolog_plotly.write_image("Oekologie_Diagramm.png")
 
 #### Kundennutzen Diagramm Lineares Produkt
 
@@ -511,8 +512,8 @@ okonomRe_y_temp = -100   # Der erste Sprung auf (0,-100)
 okonomRe_x_values.append(0)
 okonomRe_y_values.append(okonomRe_y_temp)
 
-# lineare Steigung durch Subskription
 for okonomRe_i in range(1, int(10*Anz_ReAss) + 1):
+    # lineare Steigung durch Subskription
     okonomRe_y_temp += (100+okonom_gewinn) * (Subskription/100) / Anz_ReAss
     okonomRe_x_values.append(okonomRe_i/Anz_ReAss)
     okonomRe_y_values.append(okonomRe_y_temp)
