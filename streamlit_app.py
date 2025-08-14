@@ -37,8 +37,7 @@ with st.sidebar:
             Marge = st.slider('Marge: Anteil der Herstellungskosten am Verkaufspreis [%]', min_value=0, max_value=100, value=60, format="%d %%")
 
     st.divider(width="stretch")
-
-st.sidebar.button("PDF Bericht erstellen")            
+         
 
 #### Hauptansicht mit Diagrammen
 
@@ -300,33 +299,7 @@ with st.expander("Ökologie Diagramm"):
             </div>
         """, unsafe_allow_html=True)
 
-# Digramm als Bild speichern
-fig_okolog_plotly.write_image("Oekologie_Diagramm.png")
 
-# PDF erstellen
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-
-def create_pdf():
-    c = canvas.Canvas("output.pdf", pagesize=letter)
-    width, height = letter
-    
-    # Kopfzeile hinzufügen
-    c.drawString(100, height - 50, "Kopfzeile")
-    
-    # Diagrammbild hinzufügen
-    c.drawImage("Oekologie_Diagramm.png", 100, height - 400)  # Position anpassen
-    
-    # Fußzeile hinzufügen
-    c.drawString(100, 30, "Fußzeile")
-    
-    c.save()
-
-create_pdf()
-
-if st.button('PDF exportieren'):
-    create_pdf()
-    st.success('PDF wurde erfolgreich erstellt!')
 
 
 #### Kundennutzen Diagramm Lineares Produkt
@@ -586,3 +559,132 @@ with st.expander("Ökonomie Diagramm"):
     )
 
     st.plotly_chart(fig_okonom_plotly)
+
+
+
+### PDF Export
+
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import cm
+
+# Funktion zum Erstellen des PDFs
+def create_pdf(product_name):
+    file_path = "output.pdf"
+    c = canvas.Canvas(file_path, pagesize=A4)  # A4-Größe in cm
+    width, height = A4
+    
+    # Titel
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(2 * cm, height - 7 * cm, f"Re-Wind Analyse zum Produkt: {product_name}")
+    
+    # Untertitel: Annahmen zu den Produkteigenschaften
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(2 * cm, height - 10 * cm, "Annahmen zu den Produkteigenschaften")
+    
+    # Tabelle mit 2 Spalten (Begriffe und Werte)
+    c.setFont("Helvetica", 10)
+
+    terms = ["Begriff 1", "Begriff 2", "Begriff 3"]  
+    values = ["Wert 1 (Einheit)", "Wert 2 (Einheit)", "Wert 3 (Einheit)"]  
+    
+    table_y = height - 13 * cm
+    for term, value in zip(terms, values):
+        c.drawString(2 * cm, table_y, term)
+        c.drawString(10 * cm, table_y, value) 
+        table_y -= 0.5 * cm
+    
+    # Untertitel: Ökologie Diagramm
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(2 * cm, table_y - 2 * cm, "Ökologie Diagramm")
+    
+    # Platzhalter für Diagramm
+    c.rect(2 * cm, table_y - 5 * cm , width -4*cm , 5*cm)  
+    
+     # Untertitel: Kundennutzen Diagramm
+    table_y -= (5 + 6) *cm  
+    c.setFont("Helvetica-Bold",12 )
+    c.drawString(2 * cm ,table_y-20 ,"Kundennutzen Diagramm")
+    
+    # Platzhalter für Diagramm 
+    c.rect(2*cm ,table_y-40 ,width-4*cm ,5*cm )  
+
+    # Untertitel: Ökonomie Diagramm 
+    table_y -= (5 +6)*cm  
+    c.setFont("Helvetica-Bold",12 )
+    c.drawString(2*cm ,table_y-20 ,"Ökonomie Diagramm")
+
+    # Platzhalter für Diagramm 
+    c.rect(2*cm ,table_y-40 ,width-4*cm ,5*cm )  
+
+    # Untertitel: Gesamtbetrachtung 
+    table_y -= (5 +6)*cm  
+    c.setFont("Helvetica-Bold",12 )
+    c.drawString(2*cm ,table_y-20 ,"Gesamtbetrachtung")
+
+    # Tabelle mit drei Spalten und drei Zeilen 
+    data = [["Kriterium A","Kriterium B","Kriterium C"],
+            ["Wert A1","Wert B1","Wert C1"],
+            ["Wert A2","Wert B2","Wert C2"]]
+
+    x_start =2*cm 
+    y_start =table_y -8 
+
+    for row in data:
+        for i in range(len(row)):
+            x_pos = x_start + i *6*cm 
+            y_pos = y_start 
+            text = row[i]
+            if i ==0:
+                text += ":"
+            
+            c.drawString(x_pos,y_pos,text)
+
+        y_start -=0.75*cm 
+
+        # # Kontaktdaten und Logo-Platzhalter am Ende des Dokuments hinzufügen 
+        # contact_info = "Kontaktdaten:\nName\nEmail\nTelefon"  
+        # logo_placeholder_width=10*cm  
+        # logo_placeholder_height=5*cm 
+        
+        # y_contact_start=3*cm 
+
+        # for line in contact_info.split("\n"):
+        #     st.write(line)
+        #     y_contact_start-=0.75*cm 
+        
+        
+        # # Logo-Platzhalter zeichnen (einfach ein Rechteck als Beispiel)   
+        # logo_x=(width-logo_placeholder_width)/2 
+        # logo_y=y_contact_start
+        
+        # c.rect(logo_x,y_contact_start,width-logo_placeholder_width,height)
+
+        print(f"PDF wurde erstellt: {file_path}")  
+      
+    return file_path
+
+
+
+### Dialog Fenster zur Eingabe des Produktnamens und PDF-Erstellung
+@st.dialog("Produktname eingeben")
+def product_dialog():
+    product_name_input = st.text_input("Bitte geben Sie den Namen des Produkts oder Berichts ein:")
+    
+    if st.button("PDF generieren"):
+        if product_name_input:
+            pdf_file_path = create_pdf(product_name_input)
+
+            if pdf_file_path:
+                with open(pdf_file_path, "rb") as pdf_file:
+                    st.download_button("Download PDF", pdf_file, file_name="output.pdf", mime='application/pdf')
+        else:
+            st.warning("Bitte geben Sie einen Namen ein.")
+
+# Button nicht im Dialog sondern in App
+if "vote" not in st.session_state:
+    if st.sidebar.button('PDF Bericht erstellen'):
+        product_dialog()
+else:
+    f"You voted for {st.session_state.vote['item']} because {st.session_state.vote['reason']}"
