@@ -572,13 +572,14 @@ from reportlab.lib.units import cm
 
 # Funktion zum Erstellen des PDFs
 def create_pdf(product_name):
+    timestamp = int(time.time())  # Aktuellen Zeitstempel erhalten
     pdf_file_path = f"output_{timestamp}.pdf"
     c = canvas.Canvas(pdf_file_path, pagesize=A4)  # A4-Größe in cm
     width, height = A4
     
     # Titel
-    c.setFont("Helvetica-Bold", 30)
-    c.drawString(2 * cm, height - 7 * cm, f"Re-Wind Analyse zum Produkt: {product_name}")
+    c.setFont("Helvetica-Bold", 15)
+    c.drawString(2 * cm, height - 2 * cm, f"Re-Wind Analyse zum Produkt: {product_name}")
     
     # Untertitel: Annahmen zu den Produkteigenschaften
     c.setFont("Helvetica-Bold", 12)
@@ -662,6 +663,7 @@ def create_pdf(product_name):
         
         # c.rect(logo_x,y_contact_start,width-logo_placeholder_width,height)
 
+    c.save()  # PDF speichern
       
     return pdf_file_path
 
