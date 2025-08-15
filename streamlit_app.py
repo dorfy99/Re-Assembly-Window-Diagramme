@@ -24,7 +24,7 @@ with st.sidebar:
             FußabdruckZweite = st.slider('Fußabdruck der 1. großen Re-Assembly bezogen auf die Kosten einer Neuproduktion [%]', min_value=0, max_value=100, value=40, format="%d %%")
             FußabdruckZweiteSteigung = st.slider ('Steigung des Fußabdrucks von einer großen Re-Assembly zur nächsten [%-punkte]', min_value=0, max_value=50, value=5, format="%d %%")
             FußabdruckNutzung = st.number_input('Fußabdruck der Nutzung bezogen auf den Fußabdruck der Neuproduktion [%]', min_value=0, value=50)
-            FußabdruckNutzungVerb = st.slider('Vorzeitige Effizienzsteigerung durch Re-Assembly  [0 = nicht vorhanden - 10 = sehr stark]', min_value=0, max_value=10, value=5)
+            FußabdruckNutzungVerb = st.slider('Stärke der vorzeitigen Effizienzsteigerung durch Re-Assembly  [0 = nicht vorhanden - 10 = sehr stark]', min_value=0, max_value=10, value=5)
 
     with st.expander("Kundennutzen spezifische Merkmale"):
         Innovation = st.slider('Särke des Innovationsrückgangs [0 = nicht vorhanden - 10 = sehr stark]', min_value=0, max_value=10, value=5)
@@ -38,7 +38,11 @@ with st.sidebar:
             Marge = st.slider('Marge: Anteil der Herstellungskosten am Verkaufspreis [%]', min_value=0, max_value=100, value=60, format="%d %%")
 
     st.divider(width="stretch")
-         
+
+    st.button('Link zum Whitepaper')
+
+# WZL Logo in Sidebar anzeigen
+st.logo("https://upload.wikimedia.org/wikipedia/commons/5/58/WZL_Logo2.png", size="large", link=None, icon_image=None)
 
 #### Hauptansicht mit Diagrammen
 
@@ -577,91 +581,178 @@ def create_pdf(product_name):
     c = canvas.Canvas(pdf_file_path, pagesize=A4)  # A4-Größe in cm
     width, height = A4
     
-    # Titel
-    c.setFont("Helvetica-Bold", 15)
-    c.drawString(2 * cm, height - 2 * cm, f"Re-Wind Analyse zum Produkt: {product_name}")
+    ## WZL Logo
+    logo_path = "https://upload.wikimedia.org/wikipedia/commons/5/58/WZL_Logo2.png"
+    c.drawImage(logo_path, 0.5 * cm, height - 1.6 * cm, width=5 * cm, height= 1.33 * cm)
+
+    ## Disclaimer
+    c.setFont("Helvetica", 10)
+    disclaimer1 = "Erstellt mit einem Online-Tool des WZL der RWTH-Aachen"
+    disclaimer2 = "Verfügbar unter https://re-wind.streamlit.app/"
+    c.drawString((width - (c.stringWidth(disclaimer1)))/2, height - 0.7 * cm, disclaimer1)
+    c.drawString((width - (c.stringWidth(disclaimer2)))/2, height - 1.2 * cm, disclaimer2)
+
+    ## Datum
+    from datetime import datetime
+    current_date = datetime.now().strftime("%d.%m.%Y")
+    c.setFont("Helvetica", 10)
+    c.drawString(width - (1 * cm + c.stringWidth(current_date)), height - 1.2 * cm, current_date)
+
+    # Zeichne eine Linie unter dem Logo (Kopfzeile)
+    c.line(0.5 * cm, height - 1.5 * cm, width - 0.5 * cm, height - 1.5 * cm)  # Horizontale Linie
+
+
+    ## Titel
+    c.setFont("Helvetica-Bold", 18)
+    c.drawString(2 * cm, height - 3.25 * cm, f"Re-Wind Analyse zum Produkt: {product_name}")
     
     # Untertitel: Annahmen zu den Produkteigenschaften
-    c.setFont("Helvetica-Bold", 12)
-    c.drawString(2 * cm, height - 10 * cm, "Annahmen zu den Produkteigenschaften")
+    c.setFont("Helvetica-Bold", 14)
+    c.drawString(2 * cm, height - 5 * cm, "Annahmen zu den Produkteigenschaften")
+
+   
+    ## Re-Assembly Zyklus Eigenschaft
+    c.setFont("Helvetica-Bold", 10)
+    oekolog_Eigenschaften_Benennung = ["Anzahl Re-Assemblys je linearem Lebenszyklus"]  
     
-    # Tabelle mit 2 Spalten (Begriffe und Werte)
+    oekolog_Eigenschaften_Werte = [f"{Anz_ReAss}"]  
+    
+    oekolog_Eigenschaften_Tabelle = height - 6 * cm
+    for term, value in zip(oekolog_Eigenschaften_Benennung, oekolog_Eigenschaften_Werte):
+        c.drawString(2 * cm, oekolog_Eigenschaften_Tabelle, term)
+        c.drawString(16 * cm, oekolog_Eigenschaften_Tabelle, value) 
+        oekolog_Eigenschaften_Tabelle -= 0.5 * cm 
+        
+    # Ökologische Eigenschaften in Tabelle
+    c.setFont("Helvetica-Bold", 10)
+    c.drawString(2 * cm, height - 7 * cm, "Ökonomie spezifisch")
+
     c.setFont("Helvetica", 10)
-
-    terms = ["Begriff 1", "Begriff 2", "Begriff 3"]  
-    values = ["Wert 1 (Einheit)", "Wert 2 (Einheit)", "Wert 3 (Einheit)"]  
+    oekolog_Eigenschaften_Benennung = ["Fußabdruck der 1. Re-Assembly bezogen auf den Fußabdruck einer Neuproduktion", 
+             "Steigung des Fußabdrucks von einer Re-Assembly zur nächsten",
+             "Fußabdruck der 1. großen Re-Assembly bezogen auf die Kosten einer Neuproduktion",
+             "Steigung des Fußabdrucks von einer großen Re-Assembly zur nächsten",
+             "Fußabdruck der Nutzung bezogen auf den Fußabdruck der Neuproduktion",  
+             "Stärke der vorzeitigen Effizienzsteigerung durch Re-Assembly"]  
     
-    table_y = height - 13 * cm
-    for term, value in zip(terms, values):
-        c.drawString(2 * cm, table_y, term)
-        c.drawString(10 * cm, table_y, value) 
-        table_y -= 0.5 * cm
+    oekolog_Eigenschaften_Werte = [f"{FußabdruckErste} %", f"{FußabdruckSteigung} %-punkte", f"{FußabdruckZweite} %", f"{FußabdruckZweiteSteigung} %-punkte", 
+              f"{FußabdruckNutzung} %", f"{FußabdruckNutzungVerb} (0-10)"]  
     
-    # Untertitel: Ökologie Diagramm
-    c.setFont("Helvetica-Bold", 12)
-    c.drawString(2 * cm, table_y - 2 * cm, "Ökologie Diagramm")
+    oekolog_Eigenschaften_Tabelle = height - 7.5 * cm
+    for term, value in zip(oekolog_Eigenschaften_Benennung, oekolog_Eigenschaften_Werte):
+        c.drawString(2 * cm, oekolog_Eigenschaften_Tabelle, term)
+        c.drawString(16 * cm, oekolog_Eigenschaften_Tabelle, value) 
+        oekolog_Eigenschaften_Tabelle -= 0.5 * cm
+
+    # Kundennutzen Eigenschaften in Tabelle
+    c.setFont("Helvetica-Bold", 10)
+    c.drawString(2 * cm, height - 11 * cm, "Kundennutzen spezifisch")
+   
+    c.setFont("Helvetica", 10)
+    kunde_Eigenschaften_Benennung = ["Särke des Innovationsrückgangs"]
+
+    kunde_Eigenschaften_Werte = [f"{Innovation} (0-10)"]  
     
-    # Platzhalter für Diagramm
-    c.rect(2 * cm, table_y - 5 * cm , width -4*cm , 5*cm)  
+    kunde_Eigenschaften_Tabelle = height -11.5 * cm
+    for term, value in zip(kunde_Eigenschaften_Benennung, kunde_Eigenschaften_Werte):
+        c.drawString(2 * cm, kunde_Eigenschaften_Tabelle, term)
+        c.drawString(16 * cm, kunde_Eigenschaften_Tabelle, value) 
+        kunde_Eigenschaften_Tabelle -= 0.5 * cm
+
+    # Ökonomische Eigenschaften in Tabelle
+    c.setFont("Helvetica-Bold", 10)
+    c.drawString(2 * cm, height - 12.5 * cm, "Ökologie spezifisch")
+
+    c.setFont("Helvetica", 10)
+    oekonom_Eigenschaften_Benennung = ["Kosten der 1. kleinen Re-Assembly bezogen auf die Kosten einer Neuproduktion", 
+             "Steigung der Kosten von einer kleinen Re-Assembly zur nächsten",
+             "Kosten der 1. großen Re-Assembly bezogen auf die Kosten einer Neuproduktion",
+             "Steigung der Kosten von einer großen Re-Assembly zur nächsten",
+             "Höhe der Subskriptionserlöse in einem linearen Lebenszyklus bezogen auf den Verkaufserlös eines linearen Produkts",  
+             "Marge: Anteil der Herstellungskosten am Verkaufspreis"]  
     
-     # Untertitel: Kundennutzen Diagramm
-    table_y -= (5 + 6) *cm  
-    c.setFont("Helvetica-Bold",12 )
-    c.drawString(2 * cm ,table_y-20 ,"Kundennutzen Diagramm")
+    oekonom_Eigenschaften_Werte = [f"{KostenErste} %", f"{KostenSteigung} %-punkte", f"{KostenZweite} %", f"{KostenZweiteSteigung} %-punkte", 
+              f"{Subskription} %", f"{Marge} (0-10)"]  
     
-    # Platzhalter für Diagramm 
-    c.rect(2*cm ,table_y-40 ,width-4*cm ,5*cm )  
+    oekonom_Eigenschaften_Tabelle = height - 13 * cm
+    for term, value in zip(oekonom_Eigenschaften_Benennung, oekonom_Eigenschaften_Werte):
+        c.drawString(2 * cm, oekonom_Eigenschaften_Tabelle, term)
+        c.drawString(16 * cm, oekonom_Eigenschaften_Tabelle, value) 
+        oekonom_Eigenschaften_Tabelle -= 0.5 * cm
+    
 
-    # Untertitel: Ökonomie Diagramm 
-    table_y -= (5 +6)*cm  
-    c.setFont("Helvetica-Bold",12 )
-    c.drawString(2*cm ,table_y-20 ,"Ökonomie Diagramm")
+    ## Untertitel: Gesamtergebnis
+    c.setFont("Helvetica-Bold", 14)
+    c.drawString(2 * cm, height - 17.5 * cm, "Gesamtergebnis in den drei Dimensionen")
 
-    # Platzhalter für Diagramm 
-    c.rect(2*cm ,table_y-40 ,width-4*cm ,5*cm )  
+    # Setze die Startposition für die Tabelle
+    table_start_x = 2 * cm  # x-Position der Tabelle
+    table_start_y = height - 18 * cm  # y-Position der Tabelle (anpassbar)
 
-    # Untertitel: Gesamtbetrachtung 
-    table_y -= (5 +6)*cm  
-    c.setFont("Helvetica-Bold",12 )
-    c.drawString(2*cm ,table_y-20 ,"Gesamtbetrachtung")
+    # Tabellenparameter
+    num_rows = 4
+    num_cols = 4
+    cell_width = (width - 4 * cm) / num_cols  # Breite jeder Zelle
+    cell_height = 1 * cm  # Höhe jeder Zelle
 
-    # Tabelle mit drei Spalten und drei Zeilen 
-    data = [["Kriterium A","Kriterium B","Kriterium C"],
-            ["Wert A1","Wert B1","Wert C1"],
-            ["Wert A2","Wert B2","Wert C2"]]
+    # Zeichne Gitterlinien und fülle die Kopfzeile und erste Spalte aus
+    c.setFont("Helvetica-Bold", 10)
 
-    x_start =2*cm 
-    y_start =table_y -8 
+    # Kopfzeile 
+    headers = ["", "Unterer Grenze", "Optimaler \n Abbruchzeitpunkt", "Obere Grenze"]
+    
+    for col in range(num_cols):
+        c.drawString(table_start_x + col * cell_width + (cell_width / 2) - (c.stringWidth(headers[col]) / 2), 
+                     table_start_y, headers[col])
+        c.line(table_start_x + col * cell_width, table_start_y + cell_height,
+               table_start_x + col * cell_width, table_start_y - (num_rows) * cell_height)  # Vertikale Linie
 
-    for row in data:
-        for i in range(len(row)):
-            x_pos = x_start + i *6*cm 
-            y_pos = y_start 
-            text = row[i]
-            if i ==0:
-                text += ":"
-            
-            c.drawString(x_pos,y_pos,text)
+        if col == num_cols - 1:  
+            c.line(table_start_x + col * cell_width, table_start_y + cell_height,
+                   table_start_x + col * cell_width, table_start_y - (num_rows) * cell_height)  
 
-        y_start -=0.75*cm 
+    
+    c.setFont("Helvetica-Bold", 10)
 
-        # # Kontaktdaten und Logo-Platzhalter am Ende des Dokuments hinzufügen 
-        # contact_info = "Kontaktdaten:\nName\nEmail\nTelefon"  
-        # logo_placeholder_width=10*cm  
-        # logo_placeholder_height=5*cm 
+    # Erste Spalte mit fettem Text 
+    first_column_labels = ["", "Ökologie", "Kundennutzen", "Ökonomie"]
+    
+    for row in range(1, num_rows):  
+        c.drawString(table_start_x + (cell_width / 2) - (c.stringWidth(first_column_labels[row]) / 2),
+                     table_start_y - row * cell_height - (cell_height / 2), first_column_labels[row])
         
-        # y_contact_start=3*cm 
+        c.line(table_start_x, 
+               table_start_y - row * cell_height,
+               table_start_x + width - (3*cm), 
+               table_start_y - row * cell_height)  
 
-        # for line in contact_info.split("\n"):
-        #     st.write(line)
-        #     y_contact_start-=0.75*cm 
-        
-        
-        # # Logo-Platzhalter zeichnen (einfach ein Rechteck als Beispiel)   
-        # logo_x=(width-logo_placeholder_width)/2 
-        # logo_y=y_contact_start
-        
-        # c.rect(logo_x,y_contact_start,width-logo_placeholder_width,height)
+        if row == num_rows-1:
+            c.line(table_start_x ,table_start_y-(row)*cell_height,
+                   width-(3*cm),table_start_y-(row)*cell_height)
+    
+   
+    # Füge Platzhalterwerte hinzu und zeichne Gitterlinien 
+    values_placeholder = [["Var1", "Var2", "Var3"], ["Var4", "Var5", "Var6"], ["Var7","Var8","Var9"]]
+
+    for row in range(1,num_rows):
+       for col in range(1,num_cols):  
+           value_text=values_placeholder[row-1][col-1]  
+           x_pos=table_start_x+col*cell_width+(cell_width/2)-(c.stringWidth(value_text)/2)
+           y_pos=table_start_y-row*cell_height-(cell_height/2)
+           c.drawString(x_pos,y_pos,value_text)
+
+   # Ziehe horizontale und vertikale Linien für die gesamte Tabelle 
+    for i in range(num_rows+1):  
+       c.line(table_start_x ,table_start_y-i*cell_height,
+               width-(3*cm),table_start_y-i*cell_height)
+
+    for j in range(num_cols+1):  
+       c.line(table_start_x+j*cell_width ,table_start_y,
+               table_start_x+j*cell_width ,table_start_y-(num_rows)*cell_height)
+
+
+
+
 
     c.save()  # PDF speichern
       
@@ -679,8 +770,9 @@ def product_dialog():
             pdf_file_path = create_pdf(product_name_input)
 
             if pdf_file_path:
+                download_filename = f"ReWind_Analyse_{product_name_input}.pdf"
                 with open(pdf_file_path, "rb") as pdf_file:
-                    st.download_button("Download PDF", pdf_file, file_name="output2.pdf", mime='application/pdf')
+                    st.download_button("Download PDF", pdf_file, file_name=download_filename, mime='application/pdf')
         else:
             st.warning("Bitte geben Sie einen Namen ein.")
 
@@ -689,4 +781,5 @@ if "vote" not in st.session_state:
     if st.sidebar.button('PDF Bericht erstellen'):
         product_dialog()
 else:
+
     f"You voted for {st.session_state.vote['item']} because {st.session_state.vote['reason']}"
