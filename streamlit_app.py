@@ -584,8 +584,8 @@ def create_pdf(product_name):
     c = canvas.Canvas(pdf_file_path, pagesize=A4)  # A4-Größe in cm
     width, height = A4
     
-    # WZL Logo oben links    
-    c.drawImage("WZL_Logo2.png", 0.5 * cm, height - 1.6 * cm, width=5 * cm, height=1.33 * cm)
+    # # WZL Logo oben links    
+    # c.drawImage("WZL_Logo2.png", 0.5 * cm, height - 1.6 * cm, width=5 * cm, height=1.33 * cm)
 
     ## Disclaimer
     c.setFont("Helvetica", 10)
