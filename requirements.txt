@@ -6,4 +6,3 @@ pandas
 scipy
 kaleido
 reportlab
-io
