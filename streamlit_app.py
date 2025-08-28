@@ -10,7 +10,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm
-from reportlab.pdfbase.images import ImageReader
+
 
 
 #### Sidebar mit Datenaufnahme 
@@ -585,12 +585,8 @@ def create_pdf(product_name):
     c = canvas.Canvas(pdf_file_path, pagesize=A4)  # A4-Größe in cm
     width, height = A4
     
-    logo_url = "https://www.wzl.rwth-aachen.de/global/show_picture.asp?id=aaaaaaaaabdlfcs"
-    response = requests.get(logo_url)
-    img_bytes = BytesIO(response.content)
-    logo_image = ImageReader(img_bytes)
-
-    c.drawImage(logo_image, 0.5 * cm, height - 1.6 * cm, width=5 * cm, height=1.33 * cm)
+    # WZL Logo oben links    
+    c.drawImage("WZL_Logo2.png", 0.5 * cm, height - 1.6 * cm, width=5 * cm, height=1.33 * cm)
 
     ## Disclaimer
     c.setFont("Helvetica", 10)
