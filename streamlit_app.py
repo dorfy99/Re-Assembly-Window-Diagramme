@@ -582,8 +582,8 @@ def create_pdf(product_name):
     width, height = A4
     
     ## WZL Logo
-    logo_path = "https://upload.wikimedia.org/wikipedia/commons/5/58/WZL_Logo2.png"
-    c.drawImage(logo_path, 0.5 * cm, height - 1.6 * cm, width=5 * cm, height= 1.33 * cm)
+    # logo_path = "https://upload.wikimedia.org/wikipedia/commons/5/58/WZL_Logo2.png"
+    # c.drawImage(logo_path, 0.5 * cm, height - 1.6 * cm, width=5 * cm, height= 1.33 * cm)
 
     ## Disclaimer
     c.setFont("Helvetica", 10)
@@ -773,6 +773,21 @@ def product_dialog():
                 download_filename = f"ReWind_Analyse_{product_name_input}.pdf"
                 with open(pdf_file_path, "rb") as pdf_file:
                     st.download_button("Download PDF", pdf_file, file_name=download_filename, mime='application/pdf')
+
+            # Hinzufügen eines Buttons zum Senden einer E-Mail ans WZL
+                email_address = "lukas.weirowitz@rwth-aachen.de"
+                subject = f"ReWind Analyse Bericht: {product_name_input}"
+                body = (
+                f"Sehr geehrter Herr Weirowitz,%0A"
+                f"im Anhang finden Sie eine mit Ihrem Online-Tool erstellte Re-Wind analyse zu unserem Produkt {product_name_input}. %0A"
+                f"Wir würden uns über einen Austausch zum Thema Re-Assembly und Kreislaufwirtschaft freuen %0A%0A"
+                f"------- bitte Bericht manuell als pdf anhängen -------")
+                
+                mailto_link = f"mailto:{email_address}?subject={subject}&body={body}"
+                
+                # Verwende HTML für den Link
+                st.markdown(f'Wir würden uns freuen, wenn Sie ihre Ergebnisse mit dem WZL teilen würden: <a href="{mailto_link}" target="_blank">Email öffnen</a>', unsafe_allow_html=True)
+
         else:
             st.warning("Bitte geben Sie einen Namen ein.")
 
@@ -780,6 +795,3 @@ def product_dialog():
 if "vote" not in st.session_state:
     if st.sidebar.button('PDF Bericht erstellen'):
         product_dialog()
-else:
-
-    f"You voted for {st.session_state.vote['item']} because {st.session_state.vote['reason']}"
