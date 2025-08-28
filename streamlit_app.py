@@ -776,22 +776,23 @@ def product_dialog():
                 with open(pdf_file_path, "rb") as pdf_file:
                     st.download_button("Download PDF", pdf_file, file_name=download_filename, mime='application/pdf')
 
-            # Hinzufügen eines Buttons zum Senden einer E-Mail ans WZL
-                email_address = "lukas.weirowitz@rwth-aachen.de"
-                subject = f"ReWind Analyse Bericht: {product_name_input}"
-                body = (
-                f"Sehr geehrter Herr Weirowitz,%0A"
-                f"im Anhang finden Sie eine mit Ihrem Online-Tool erstellte Re-Wind analyse zu unserem Produkt {product_name_input}. %0A"
-                f"Wir würden uns über einen Austausch zum Thema Re-Assembly und Kreislaufwirtschaft freuen %0A%0A"
-                f"------- bitte Bericht manuell als pdf anhängen -------")
-                
-                mailto_link = f"mailto:{email_address}?subject={subject}&body={body}"
-                
-                # Verwende HTML für den Link
-                st.markdown(f'Wir würden uns freuen, wenn Sie ihre Ergebnisse mit dem WZL teilen würden: <a href="{mailto_link}" target="_blank">Email öffnen</a>', unsafe_allow_html=True)
-
+       
         else:
             st.warning("Bitte geben Sie einen Namen ein.")
+
+    # Hinzufügen eines Buttons zum Senden einer E-Mail ans WZL
+    email_address = "lukas.weirowitz@rwth-aachen.de"
+    subject = f"ReWind Analyse Bericht: {product_name_input}"
+    body = (
+    f"Sehr geehrter Herr Weirowitz,%0A"
+    f"im Anhang finden Sie eine mit Ihrem Online-Tool erstellte Re-Wind analyse zu unserem Produkt {product_name_input}. %0A"
+    f"Wir würden uns über einen Austausch zum Thema Re-Assembly und Kreislaufwirtschaft freuen %0A%0A"
+    f"------- bitte Bericht manuell als pdf anhängen -------")
+    
+    mailto_link = f"mailto:{email_address}?subject={subject}&body={body}"
+    
+    # Verwende HTML für den Link
+    st.markdown(f'Wir würden uns freuen, wenn Sie ihre Ergebnisse mit dem WZL teilen würden: <a href="{mailto_link}" target="_blank">Email öffnen</a>', unsafe_allow_html=True)
 
 # Button nicht im Dialog sondern in App
 if "vote" not in st.session_state:
