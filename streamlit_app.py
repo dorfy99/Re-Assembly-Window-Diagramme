@@ -784,10 +784,10 @@ def product_dialog():
     email_address = "lukas.weirowitz@rwth-aachen.de"
     subject = f"ReWind Analyse Bericht: {product_name_input}"
     body = (
-    f"Sehr geehrter Herr Weirowitz,%0A"
+    f"Sehr geehrter Herr Weirowitz,%0A%0A"
     f"im Anhang finden Sie eine mit Ihrem Online-Tool erstellte Re-Wind analyse zu unserem Produkt {product_name_input}. %0A"
     f"Wir würden uns über einen Austausch zum Thema Re-Assembly und Kreislaufwirtschaft freuen %0A%0A"
-    f"------- bitte Bericht manuell als pdf anhängen -------")
+    f"------- bitte Bericht manuell als pdf anhängen ------- %0A%0A")
     
     mailto_link = f"mailto:{email_address}?subject={subject}&body={body}"
     
