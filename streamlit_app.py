@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
 import time
-from io import BytesIO
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
