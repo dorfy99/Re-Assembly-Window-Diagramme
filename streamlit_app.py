@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
 import time
+import requests
 
 
 #### Sidebar mit Datenaufnahme 
@@ -37,12 +38,13 @@ with st.sidebar:
             Subskription = st.number_input('Höhe der Subskriptionserlöse in einem linearen Lebenszyklus bezogen auf den Verkaufserlös eines linearen Produkts [%]', min_value=0, value=120)
             Marge = st.slider('Marge: Anteil der Herstellungskosten am Verkaufspreis [%]', min_value=0, max_value=100, value=60, format="%d %%")
 
+
     st.divider(width="stretch")
 
     st.button('Link zum Whitepaper')
 
 # WZL Logo in Sidebar anzeigen
-st.logo("https://upload.wikimedia.org/wikipedia/commons/5/58/WZL_Logo2.png", size="large", link=None, icon_image=None)
+st.logo("https://www.wzl.rwth-aachen.de/global/show_picture.asp?id=aaaaaaaaabdlfcs", size="large", link=None, icon_image=None)
 
 #### Hauptansicht mit Diagrammen
 
@@ -581,8 +583,18 @@ def create_pdf(product_name):
     c = canvas.Canvas(pdf_file_path, pagesize=A4)  # A4-Größe in cm
     width, height = A4
     
-    ## WZL Logo
-    # logo_path = "https://upload.wikimedia.org/wikipedia/commons/5/58/WZL_Logo2.png"
+    # WZL Logo
+    logo_url = "https://www.wzl.rwth-aachen.de/global/show_picture.asp?id=aaaaaaaaabdlfcs"
+    logo_local_path = "logo_temp.jpg"
+
+# Bild herunterladen
+    response = requests.get(logo_url)
+    with open(logo_local_path, "wb") as f:
+        f.write(response.content)
+
+    # Dann in ReportLab nutzen:
+    c.drawImage(logo_local_path, 0.5 * cm, height - 1.6 * cm, width=5 * cm, height=1.33 * cm)
+    # logo_path = "https://www.wzl.rwth-aachen.de/global/show_picture.asp?id=aaaaaaaaabdlfcs"
     # c.drawImage(logo_path, 0.5 * cm, height - 1.6 * cm, width=5 * cm, height= 1.33 * cm)
 
     ## Disclaimer
