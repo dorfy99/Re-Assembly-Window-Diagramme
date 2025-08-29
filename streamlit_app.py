@@ -235,7 +235,6 @@ floating_average_asymmetric = (
       .mean()
 )
 
-
 ### Kundennutzen Re-Assembly
 
 # Initialisierung der x- und y-Werte für die ReAss Kurve
@@ -249,7 +248,7 @@ kundeRe_y_values.append(KundeRe_y_temp)
 
 # Erstellen des Datensatzes
 for kundeRe_i in range(1, int(20 * Anz_ReAss + 1)):
-    num_points = 50  # Reduzierung der Anzahl Punkte 
+    num_points = 25  # Reduzierung der Anzahl Punkte 
     kundeRe_x_cosine = np.linspace(kundeRe_i - 1, kundeRe_i, num=num_points)
     kundeRe_y_cosine = KundeRe_y_temp - (25/(Anz_ReAss) * (1 - np.cos((np.pi / 2) * (kundeRe_x_cosine - (kundeRe_i -1 )))))
     
@@ -277,14 +276,15 @@ kunde_re_data = {
 
 kunde_re_df = pd.DataFrame(kunde_re_data)
 
+
 # Berechnung des gleitenden Durchschnitts über ein Fenster von Größe 'window'
 window_size = int(len(kunde_re_df) / len(np.unique(kunde_re_df["KundeRe_X_Werte"]))) * 50
-
 floating_average_Re_asymmetric = (
     pd.Series(kunde_re_df["KundeRe_Y_Werte"])
       .rolling(window=window_size, min_periods=1)
       .mean()
 )
+
 
 ## Korridor des Kundennutzen definieren
 kunde_korridor_x = np.arange(0, 21, 1)
@@ -294,29 +294,27 @@ kunde_korridor_unten = 65 + 10 * kunde_korridor_x
 
 ## Kundennutzen Sweetspot berechnen
 
-Kunde_diff = floating_average_asymmetric - floating_average_Re_asymmetric
-
+kunde_diff = floating_average_asymmetric - floating_average_Re_asymmetric
 kunde_schnittpunkte = []
-kunde_diff_indices = np.where(np.diff(np.sign(Kunde_diff)))[0]
+kunde_diff_indices = np.where(np.diff(np.sign(kunde_diff)))[0]
 for idx in kunde_diff_indices:
     if idx + 1 < len(kunde_x_values):  # Sicherstellen, dass idx+1 im gültigen Bereich liegt!
         x_a, x_b = kunde_x_values[idx], kunde_x_values[idx+1]
-        y_a, y_b = Kunde_diff[idx], Kunde_diff[idx+1]
+        y_a, y_b = kunde_diff[idx], kunde_diff[idx+1]
         if y_b != y_a:
             # Lineare Interpolation für genaueren Schnittpunkt
             Kunde_schnittpunkt_x = x_a - y_a * (x_b - x_a) / (y_b - y_a)
             kunde_schnittpunkte.append(Kunde_schnittpunkt_x)
 
 kunde_schnittpunkt_sweetspot = max(kunde_schnittpunkte)
-kunde_sweetspot = int(kunde_schnittpunkt_sweetspot) - 1
+kunde_sweetspot = int(kunde_schnittpunkt_sweetspot*Anz_ReAss) - 1
 
 ## Kundennutzen Fenster Berechnen
 kunde_fenster_low = 1
 
 
 
-kunde_korridor_unten_df = 65 + 10 * (np.array(kundeRe_x_values) / 1000)
-st.table(kunde_korridor_unten_df)
+kunde_korridor_unten_df = 65 + (10 * (np.array(scaled_kundeRe_x_values)))
 
 diff = np.array(kundeRe_y_values) - kunde_korridor_unten_df
 kunde_ReUndKorridor_indices = np.where(np.diff(np.sign(diff)))[0]
@@ -331,18 +329,10 @@ for idx in kunde_ReUndKorridor_indices:
             kunde_ReUndKorridor_Schnittpunkte.append(schnitt_x)
 
 if kunde_ReUndKorridor_Schnittpunkte:   
-    kunde_fenster_high  = min (kunde_ReUndKorridor_Schnittpunkte)
+    kunde_fenster_high  = int (min (kunde_ReUndKorridor_Schnittpunkte))
+else: kunde_fenster_high="fehler"
 
 
- 
-
-
-
-# st.table(kunde_schnittpunkte)
-# st.table(Kunde_diff)
-# st.table(kunde_x_values)
-# st.table(floating_average_asymmetric)
-# st.table(floating_average_Re_asymmetric)
 
 ### Ökonomie Diagramm
 
@@ -508,7 +498,7 @@ with st.expander("**Ökologie Diagramm**"):
         line=dict(color='lightgreen')
     ))
 
-    if okonom_min_neg_to_pos_x != None: #Abfrage ob Fenster vorhanden
+    if okolog_min_neg_to_pos_x != None: #Abfrage ob Fenster vorhanden
 
         # Hinzufügen der Re-Assembly kurve nach dem Re-Wind Punkt
         fig_okolog_plotly.add_trace(go.Scatter(
