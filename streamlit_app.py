@@ -145,6 +145,7 @@ for i in range(len(okologRe_x_values)):
 okolog_min_neg_to_pos_x = None
 okolog_max_pos_to_neg_x = None
 
+
 for i in range(1, len(df_interpolated)):
     previous_value = df_interpolated['Differenz'].iloc[i-1]
     current_value = df_interpolated['Differenz'].iloc[i]
@@ -162,7 +163,7 @@ for i in range(1, len(df_interpolated)):
 # Fenstergrenzen berechnen
 if okolog_min_neg_to_pos_x is None:
     okolog_fenster_low = 1
-    okolog_min_neg_to_pos_x = 1/Anz_ReAss
+    #okolog_min_neg_to_pos_x = 1/Anz_ReAss
 else:
     okolog_fenster_low = int(okolog_min_neg_to_pos_x * Anz_ReAss)
 
@@ -199,7 +200,7 @@ Kunde_y_temp = 100
 kunde_x_values.append(0)
 kunde_y_values.append(Kunde_y_temp)
 
-# Erstellen des Datensatzes mit dem gewünschten Muster
+# Erstellen des Datensatzes
 for kunde_i in range(1, 21):
     # Cosinusförmiger Abfall von Kunde_y_temp um 50 (Einstellwert ist die 25) zwischen kunde_i und kunde_i + 1
     kunde_x_cosine = np.linspace(kunde_i - 1, kunde_i, num=50)  # Interpolation zwischen den Punkten
@@ -213,21 +214,21 @@ for kunde_i in range(1, 21):
     Kunde_y_temp -= 50
     
     # Sprung um ... bei Neuproduktion
-    if kunde_i < 10:
+    if kunde_i < 20:
         Kunde_y_temp += 60
         kunde_x_values.append(kunde_i)
         kunde_y_values.append(Kunde_y_temp)
 
 # Erstellen des DataFrames zur Visualisierung
 kunde_data = {
-    "Kunde_X-Werte": kunde_x_values,
+    "Kunde_X_Werte": kunde_x_values,
     "Kunde_Y-Werte": kunde_y_values,
 }
 
 kunde_df = pd.DataFrame(kunde_data)
 
 # Berechnung des gleitenden Durchschnitts über ein Fenster von Größe 'window'
-window_size = int(len(kunde_df) / len(np.unique(kunde_df["Kunde_X-Werte"]))) * 50 
+window_size = int(len(kunde_df) / len(np.unique(kunde_df["Kunde_X_Werte"]))) * 50 
 floating_average_asymmetric = (
     pd.Series(kunde_df["Kunde_Y-Werte"])
       .rolling(window=window_size, min_periods=1)
@@ -246,7 +247,7 @@ KundeRe_y_temp = 100
 kundeRe_x_values.append(0)
 kundeRe_y_values.append(KundeRe_y_temp)
 
-# Erstellen des Datensatzes mit dem gewünschten Muster
+# Erstellen des Datensatzes
 for kundeRe_i in range(1, int(20 * Anz_ReAss + 1)):
     num_points = 50  # Reduzierung der Anzahl Punkte 
     kundeRe_x_cosine = np.linspace(kundeRe_i - 1, kundeRe_i, num=num_points)
@@ -260,7 +261,7 @@ for kundeRe_i in range(1, int(20 * Anz_ReAss + 1)):
     KundeRe_y_temp -= 50/Anz_ReAss
     
     # Sprung um ... bei Neuproduktion - Innovationsrückgang in Klammer berücksichtigt
-    if kundeRe_i < int(10 * Anz_ReAss):
+    if kundeRe_i < int(20 * Anz_ReAss):
         KundeRe_y_temp += (60/Anz_ReAss - ((Innovation/5) * (1 + ((kundeRe_i)/50))))
         kundeRe_x_values.append(kundeRe_i)
         kundeRe_y_values.append(KundeRe_y_temp)
@@ -285,18 +286,63 @@ floating_average_Re_asymmetric = (
       .mean()
 )
 
-## Korridor des Kundennutzen
-# X-Werte definieren: linear von 0 bis 10 in 1er Schritten
-x = np.arange(0, 11, 1)
-
-# Erste Gerade: startet bei y=100 mit einer Steigung von 10
-y1 = 100 + 10 * x
-
-# Zweite Gerade: startet bei y=75 mit einer Steigung von 10
-y2 = 65 + 10 * x
+## Korridor des Kundennutzen definieren
+kunde_korridor_x = np.arange(0, 21, 1)
+kunde_korridor_oben = 100 + 10 * kunde_korridor_x 
+kunde_korridor_unten = 65 + 10 * kunde_korridor_x 
 
 
+## Kundennutzen Sweetspot berechnen
 
+Kunde_diff = floating_average_asymmetric - floating_average_Re_asymmetric
+
+kunde_schnittpunkte = []
+kunde_diff_indices = np.where(np.diff(np.sign(Kunde_diff)))[0]
+for idx in kunde_diff_indices:
+    if idx + 1 < len(kunde_x_values):  # Sicherstellen, dass idx+1 im gültigen Bereich liegt!
+        x_a, x_b = kunde_x_values[idx], kunde_x_values[idx+1]
+        y_a, y_b = Kunde_diff[idx], Kunde_diff[idx+1]
+        if y_b != y_a:
+            # Lineare Interpolation für genaueren Schnittpunkt
+            Kunde_schnittpunkt_x = x_a - y_a * (x_b - x_a) / (y_b - y_a)
+            kunde_schnittpunkte.append(Kunde_schnittpunkt_x)
+
+kunde_schnittpunkt_sweetspot = max(kunde_schnittpunkte)
+kunde_sweetspot = int(kunde_schnittpunkt_sweetspot) - 1
+
+## Kundennutzen Fenster Berechnen
+kunde_fenster_low = 1
+
+
+
+kunde_korridor_unten_df = 65 + 10 * (np.array(kundeRe_x_values) / 1000)
+st.table(kunde_korridor_unten_df)
+
+diff = np.array(kundeRe_y_values) - kunde_korridor_unten_df
+kunde_ReUndKorridor_indices = np.where(np.diff(np.sign(diff)))[0]
+
+kunde_ReUndKorridor_Schnittpunkte = []
+for idx in kunde_ReUndKorridor_indices:
+    if idx+1 < len(kundeRe_x_values):
+        x_d, x_e = kundeRe_x_values[idx], kundeRe_x_values[idx+1]
+        y_d, y_e = diff[idx], diff[idx+1]
+        if y_e != y_d:
+            schnitt_x = x_d - y_d * (x_e-x_d)/(y_e-y_d)
+            kunde_ReUndKorridor_Schnittpunkte.append(schnitt_x)
+
+if kunde_ReUndKorridor_Schnittpunkte:   
+    kunde_fenster_high  = min (kunde_ReUndKorridor_Schnittpunkte)
+
+
+ 
+
+
+
+# st.table(kunde_schnittpunkte)
+# st.table(Kunde_diff)
+# st.table(kunde_x_values)
+# st.table(floating_average_asymmetric)
+# st.table(floating_average_Re_asymmetric)
 
 ### Ökonomie Diagramm
 
@@ -409,15 +455,9 @@ for i in range(1, len(df_interpolated)):
         if okonom_max_pos_to_neg_x is None or df_interpolated['x'].iloc[i] > okonom_max_pos_to_neg_x:
             okonom_max_pos_to_neg_x = df_interpolated['x'].iloc[i]
 
-st.table(df_interpolated)
-st.table([okonom_min_neg_to_pos_x,okonom_max_pos_to_neg_x])
 
 # Fenstergrenzen berechnen
-if okonom_min_neg_to_pos_x is None:
-    okonom_fenster_low = "nicht vorhanden"
-    
-else:
-    okonom_fenster_low = (okonom_min_neg_to_pos_x * Anz_ReAss)
+okonom_fenster_low = int(okonom_min_neg_to_pos_x * Anz_ReAss)
 
 if okonom_max_pos_to_neg_x is None:
     okonom_fenster_high = "unendlich"
@@ -468,62 +508,64 @@ with st.expander("**Ökologie Diagramm**"):
         line=dict(color='lightgreen')
     ))
 
-    # Hinzufügen der Re-Assembly kurve nach dem Re-Wind Punkt
-    fig_okolog_plotly.add_trace(go.Scatter(
-        x=okologRe_neustart_x_values,
-        y=okologRe_neustart_y_values,
-        mode="lines",
-        name="Re-Assembly Produkt: Zweiter Kreislauf",
-        line=dict(dash='dot', color='lightgreen')
-    ))
+    if okonom_min_neg_to_pos_x != None: #Abfrage ob Fenster vorhanden
+
+        # Hinzufügen der Re-Assembly kurve nach dem Re-Wind Punkt
+        fig_okolog_plotly.add_trace(go.Scatter(
+            x=okologRe_neustart_x_values,
+            y=okologRe_neustart_y_values,
+            mode="lines",
+            name="Re-Assembly Produkt: Zweiter Kreislauf",
+            line=dict(dash='dot', color='lightgreen')
+        ))
 
 
-    # Fenster Bereich plotten
-    fig_okolog_plotly.add_shape(type="rect",
-                x0=okolog_min_neg_to_pos_x, x1=okolog_max_pos_to_neg_x,
-                y0=0, y1=okolog_xWindow_max_y_value,
-                fillcolor="orange",
-                opacity=0.1,
-                layer="below",
-                line_width=0)
-    
-    # Füge ein Icon zur linken Grenze hinzu
-    fig_okolog_plotly.add_annotation(
-        x=okolog_min_neg_to_pos_x,
-        y=okolog_xWindow_max_y_value*0.5,
-        text="➡️",
-        showarrow=False,
-        font=dict(size=15),
-    )
+        # Fenster Bereich plotten
+        fig_okolog_plotly.add_shape(type="rect",
+                    x0=okolog_min_neg_to_pos_x, x1=okolog_max_pos_to_neg_x,
+                    y0=0, y1=okolog_xWindow_max_y_value,
+                    fillcolor="orange",
+                    opacity=0.1,
+                    layer="below",
+                    line_width=0)
+        
+        # Füge ein Icon zur linken Grenze hinzu
+        fig_okolog_plotly.add_annotation(
+            x=okolog_min_neg_to_pos_x,
+            y=okolog_xWindow_max_y_value*0.5,
+            text="➡️",
+            showarrow=False,
+            font=dict(size=15),
+        )
 
-    # Füge ein Icon zur rechten Grenze hinzu
-    fig_okolog_plotly.add_annotation(
-        x=okolog_max_pos_to_neg_x,
-        y=okolog_xWindow_max_y_value*0.5,
-        text="⬅️",
-        showarrow=False,
-        font=dict(size=15),
-    )
+        # Füge ein Icon zur rechten Grenze hinzu
+        fig_okolog_plotly.add_annotation(
+            x=okolog_max_pos_to_neg_x,
+            y=okolog_xWindow_max_y_value*0.5,
+            text="⬅️",
+            showarrow=False,
+            font=dict(size=15),
+        )
 
-    # Sweetspot Indikator plotten
-        # Werte für Sweetspot indikator linie
-    okolog_sweetspot_marker_x_values = [okolog_sweetspot/Anz_ReAss, okolog_diff_max, okolog_diff_max]
-    okolog_sweetspot_marker_y_values = [0, 100, okolog_xWindow_max_y_value]
-    fig_okolog_plotly.add_trace(go.Scatter(
-        x=okolog_sweetspot_marker_x_values,
-        y=okolog_sweetspot_marker_y_values,
-        mode='lines',
-        line=dict(color="red", width=2),
-        showlegend=False))
-    
-    # Füge ein Icon hinzu zum Neustartzeitpunkt
-    fig_okolog_plotly.add_annotation(
-        x=okolog_diff_max,
-        y=okolog_xWindow_max_y_value,
-        text="🔄",
-        showarrow=False,
-        font=dict(size=20),
-    )
+        # Sweetspot Indikator plotten
+            # Werte für Sweetspot indikator linie
+        okolog_sweetspot_marker_x_values = [okolog_sweetspot/Anz_ReAss, okolog_diff_max, okolog_diff_max]
+        okolog_sweetspot_marker_y_values = [0, 100, okolog_xWindow_max_y_value]
+        fig_okolog_plotly.add_trace(go.Scatter(
+            x=okolog_sweetspot_marker_x_values,
+            y=okolog_sweetspot_marker_y_values,
+            mode='lines',
+            line=dict(color="red", width=2),
+            showlegend=False))
+        
+        # Füge ein Icon hinzu zum Neustartzeitpunkt
+        fig_okolog_plotly.add_annotation(
+            x=okolog_diff_max,
+            y=okolog_xWindow_max_y_value,
+            text="🔄",
+            showarrow=False,
+            font=dict(size=20),
+        )
 
     fig_okolog_plotly.update_layout(
         xaxis=dict(title='Lineare Lebenszyklen', side='bottom', tickmode='linear', dtick=1, range=[-0.01, int(okolog_max_pos_to_neg_x)+1.01]),
@@ -537,36 +579,43 @@ with st.expander("**Ökologie Diagramm**"):
 
     # Fenster und Sweetspot anzeigen Ökologie
     col1, col2, col3 = st.columns(3)
-
-    with col1:
+    if okolog_min_neg_to_pos_x == None: #Anzeige falls kein Fenster vorhanden
         st.markdown(f"""
-            <div style="text-align: center; white-space: nowrap;">
-                <strong>➡️ Untere Fenstergrenze</strong><br>
-                <span style="font-size: 24px;">≥</span> 
-                <span style="font-size: 24px;">{okolog_fenster_low}</span>
-                <span style="font-size: 14px;">Re-Assemblys</span>
-            </div>
-        """, unsafe_allow_html=True)
+                <div style="text-align: center; white-space: nowrap;">
+                    <strong> Kein ReAssembly Fenster vorhanden</strong><br><br>
+                    </div>
+            """, unsafe_allow_html=True)
+        
+    else: # Anzeige wenn Fenster vorhanden
+        with col1:
+            st.markdown(f"""
+                <div style="text-align: center; white-space: nowrap;">
+                    <strong>➡️ Untere Fenstergrenze</strong><br>
+                    <span style="font-size: 24px;">≥</span> 
+                    <span style="font-size: 24px;">{okolog_fenster_low}</span>
+                    <span style="font-size: 14px;">Re-Assemblys</span>
+                </div>
+            """, unsafe_allow_html=True)
 
-    with col2:
-        st.markdown(f"""
-            <div style="text-align: center; white-space: nowrap;">
-                <strong>🔄 Re-Wind Punkt</strong><br>
-                <span style="font-size: 14px;">nach</span>
-                <span style="font-size: 24px;">{okolog_sweetspot}</span>
-                <span style="font-size: 14px;">Re-Assemblys</span>
-            </div>
-        """, unsafe_allow_html=True)
+        with col2:
+            st.markdown(f"""
+                <div style="text-align: center; white-space: nowrap;">
+                    <strong>🔄 Re-Wind Punkt</strong><br>
+                    <span style="font-size: 14px;">nach</span>
+                    <span style="font-size: 24px;">{okolog_sweetspot}</span>
+                    <span style="font-size: 14px;">Re-Assemblys</span>
+                </div>
+            """, unsafe_allow_html=True)
 
-    with col3:
-        st.markdown(f"""
-            <div style="text-align: center; white-space: nowrap;">
-                <strong>⬅️ Obere Fenstergrenze</strong><br>
-                <span style="font-size: 24px;">≤</span>
-                <span style="font-size: 24px;">{okolog_fenster_high}</span>
-                <span style="font-size: 14px;">Re-Assemblys</span>
-            </div>
-        """, unsafe_allow_html=True)
+        with col3:
+            st.markdown(f"""
+                <div style="text-align: center; white-space: nowrap;">
+                    <strong>⬅️ Obere Fenstergrenze</strong><br>
+                    <span style="font-size: 24px;">≤</span>
+                    <span style="font-size: 24px;">{okolog_fenster_high}</span>
+                    <span style="font-size: 14px;">Re-Assemblys</span>
+                </div>
+            """, unsafe_allow_html=True)
 
 
 ## Diagramm anzeigen Kundennutzen
@@ -574,22 +623,25 @@ with st.expander("**Kundennutzen Diagramm**"):
    
     fig_kunde_plotly = go.Figure()
 
+    # Lineares Produkt
     fig_kunde_plotly.add_trace(go.Scatter(
-        x=kunde_df["Kunde_X-Werte"],
+        x=kunde_df["Kunde_X_Werte"],
         y=kunde_df["Kunde_Y-Werte"],
         mode="lines",
         line=dict(color='darkblue'),
         name="Produkt mit linearer Nutzung"  
     ))
 
+    # Lineares Podukt Mittelwert
     fig_kunde_plotly.add_trace(go.Scatter(
-        x=kunde_df["Kunde_X-Werte"],
+        x=kunde_df["Kunde_X_Werte"],
         y=floating_average_asymmetric,
         mode="lines",
         line=dict(dash='dash', color='darkblue'),
         name="Produkt mit linearer Nutzung: langfristiges Mittel"
     ))
 
+    # ReAssembly Produkt 
     fig_kunde_plotly.add_trace(go.Scatter(
         x=kunde_re_df["KundeRe_X_Werte"],
         y=kunde_re_df["KundeRe_Y_Werte"],
@@ -598,6 +650,7 @@ with st.expander("**Kundennutzen Diagramm**"):
         name="Re-Assembly Produkt"  
     ))
 
+    # ReAssembly Produkt Mittelwert
     fig_kunde_plotly.add_trace(go.Scatter(
         x=kunde_re_df["KundeRe_X_Werte"],
         y=floating_average_Re_asymmetric,
@@ -606,10 +659,10 @@ with st.expander("**Kundennutzen Diagramm**"):
         name="Re-Assembly Produkt: langfristiges Mittel"  
     ))
     
-    # Grauen Bereich zwischen den Linien hinzufügen (fill)
+    # Korridor des Kundennutzen
     fig_kunde_plotly.add_trace(go.Scatter(
-        x=np.concatenate([x, x[::-1]]),
-        y=np.concatenate([y1, y2[::-1]]),
+        x=np.concatenate([kunde_korridor_x, kunde_korridor_x[::-1]]),
+        y=np.concatenate([kunde_korridor_unten, kunde_korridor_oben[::-1]]),
         fill='toself',
         fillcolor='rgba(128,128,128,0.1)',
         line=dict(color='rgba(255,255,255,0)'),
@@ -627,36 +680,42 @@ with st.expander("**Kundennutzen Diagramm**"):
 
 # Fenster und Sweetspot anzeigen Kundennutzen
     col1, col2, col3 = st.columns(3)
-
-    with col1:
+    if 1 == None: #Anzeige falls kein Fenster vorhanden
         st.markdown(f"""
-            <div style="text-align: center; white-space: nowrap;">
-                <strong>➡️ Untere Fenstergrenze</strong><br>
-                <span style="font-size: 24px;">≥</span> 
-                <span style="font-size: 24px;">{okolog_fenster_low}</span>
-                <span style="font-size: 14px;">Re-Assemblys</span>
-            </div>
-        """, unsafe_allow_html=True)
+                <div style="text-align: center; white-space: nowrap;">
+                    <strong> Kein ReAssembly Fenster vorhanden</strong><br><br>
+                    </div>
+            """, unsafe_allow_html=True)
+    else:
+        with col1:
+            st.markdown(f"""
+                <div style="text-align: center; white-space: nowrap;">
+                    <strong>➡️ Untere Fenstergrenze</strong><br>
+                    <span style="font-size: 24px;">≥</span> 
+                    <span style="font-size: 24px;">{kunde_fenster_low}</span>
+                    <span style="font-size: 14px;">Re-Assemblys</span>
+                </div>
+            """, unsafe_allow_html=True)
 
-    with col2:
-        st.markdown(f"""
-            <div style="text-align: center; white-space: nowrap;">
-                <strong>🔄 Re-Wind Punkt</strong><br>
-                <span style="font-size: 14px;">nach</span>
-                <span style="font-size: 24px;">{okolog_sweetspot}</span>
-                <span style="font-size: 14px;">Re-Assemblys</span>
-            </div>
-        """, unsafe_allow_html=True)
+        with col2:
+            st.markdown(f"""
+                <div style="text-align: center; white-space: nowrap;">
+                    <strong>🔄 Re-Wind Punkt</strong><br>
+                    <span style="font-size: 14px;">nach</span>
+                    <span style="font-size: 24px;">{kunde_sweetspot}</span>
+                    <span style="font-size: 14px;">Re-Assemblys</span>
+                </div>
+            """, unsafe_allow_html=True)
 
-    with col3:
-        st.markdown(f"""
-            <div style="text-align: center; white-space: nowrap;">
-                <strong>⬅️ Obere Fenstergrenze</strong><br>
-                <span style="font-size: 24px;">≤</span>
-                <span style="font-size: 24px;">{okolog_fenster_high}</span>
-                <span style="font-size: 14px;">Re-Assemblys</span>
-            </div>
-        """, unsafe_allow_html=True)
+        with col3:
+            st.markdown(f"""
+                <div style="text-align: center; white-space: nowrap;">
+                    <strong>⬅️ Obere Fenstergrenze</strong><br>
+                    <span style="font-size: 24px;">≤</span>
+                    <span style="font-size: 24px;">{kunde_fenster_high}</span>
+                    <span style="font-size: 14px;">Re-Assemblys</span>
+                </div>
+            """, unsafe_allow_html=True)
 
 
 
@@ -689,17 +748,17 @@ with st.expander("**Ökonomie Diagramm**"):
         legend=dict(x=0, y=1, xanchor='left', yanchor='bottom', bgcolor='rgba(0,0,0,0)'),
         )
 
-    # Hinzufügen der Re-Assembly kurve nach dem Re-Wind Punkt
-    fig_okonom_plotly.add_trace(go.Scatter(
-        x=okonomRe_neustart_x_values,
-        y=okonomRe_neustart_y_values,
-        mode="lines",
-        name="Re-Assembly Produkt: Zweiter Kreislauf",
-        line=dict(dash='dot', color='lightgreen')
-    ))
+    if okonom_min_neg_to_pos_x != None: #Abfrage ob Fenster vorhanden
+        # Hinzufügen der Re-Assembly kurve nach dem Re-Wind Punkt
+        fig_okonom_plotly.add_trace(go.Scatter(
+            x=okonomRe_neustart_x_values,
+            y=okonomRe_neustart_y_values,
+            mode="lines",
+            name="Re-Assembly Produkt: Zweiter Kreislauf",
+            line=dict(dash='dot', color='lightgreen')
+        ))
 
-    # Fenster Bereich plotten
-    if okonom_min_neg_to_pos_x != None: #Abfrage ob Fesnter vorhanden
+        # Fenster Bereich plotten
         fig_okonom_plotly.add_shape(type="rect",
             x0=okonom_min_neg_to_pos_x, x1=okonom_max_pos_to_neg_x,
             y0=0,
@@ -750,36 +809,44 @@ with st.expander("**Ökonomie Diagramm**"):
 
 # Fenster und Sweetspot anzeigen Ökonomie
     col1, col2, col3 = st.columns(3)
-
-    with col1:
+    if okonom_min_neg_to_pos_x == None: #Anzeige falls kein Fenster vorhanden
         st.markdown(f"""
             <div style="text-align: center; white-space: nowrap;">
-                <strong>➡️ Untere Fenstergrenze</strong><br>
-                <span style="font-size: 24px;">≥</span> 
-                <span style="font-size: 24px;">{okonom_min_neg_to_pos_x}</span>
-                <span style="font-size: 14px;">Re-Assemblys</span>
+            <strong> Kein ReAssembly Fenster vorhanden</strong><br><br>
             </div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
     
-    with col2:
-        st.markdown(f"""
-            <div style="text-align: center; white-space: nowrap;">
-                <strong>🔄 Re-Wind Punkt</strong><br>
-                <span style="font-size: 14px;">nach</span>
-                <span style="font-size: 24px;">{okonom_sweetspot}</span>
-                <span style="font-size: 14px;">Re-Assemblys</span>
-            </div>
-        """, unsafe_allow_html=True)
+    else: #Anzeige falls Fenster vorhanden
 
-    with col3:
-        st.markdown(f"""
-            <div style="text-align: center; white-space: nowrap;">
-                <strong>⬅️ Obere Fenstergrenze</strong><br>
-                <span style="font-size: 24px;">≤</span>
-                <span style="font-size: 24px;">{okonom_fenster_high}</span>
-                <span style="font-size: 14px;">Re-Assemblys</span>
-            </div>
-        """, unsafe_allow_html=True)
+        with col1:
+            st.markdown(f"""
+                <div style="text-align: center; white-space: nowrap;">
+                    <strong>➡️ Untere Fenstergrenze</strong><br>
+                    <span style="font-size: 24px;">≥</span> 
+                    <span style="font-size: 24px;">{(okonom_fenster_low)}</span>
+                    <span style="font-size: 14px;">Re-Assemblys</span>
+                </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown(f"""
+                <div style="text-align: center; white-space: nowrap;">
+                    <strong>🔄 Re-Wind Punkt</strong><br>
+                    <span style="font-size: 14px;">nach</span>
+                    <span style="font-size: 24px;">{okonom_sweetspot}</span>
+                    <span style="font-size: 14px;">Re-Assemblys</span>
+                </div>
+            """, unsafe_allow_html=True)
+
+        with col3:
+            st.markdown(f"""
+                <div style="text-align: center; white-space: nowrap;">
+                    <strong>⬅️ Obere Fenstergrenze</strong><br>
+                    <span style="font-size: 24px;">≤</span>
+                    <span style="font-size: 24px;">{okonom_fenster_high}</span>
+                    <span style="font-size: 14px;">Re-Assemblys</span>
+                </div>
+            """, unsafe_allow_html=True)
 
 
 
