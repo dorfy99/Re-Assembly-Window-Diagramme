@@ -21,9 +21,9 @@ with st.sidebar:
 
     # Erstellen von 9 individuellen Slidern mit Titeln und ausklappbaren Abschnitten
 
-    Anz_ReAss = st.slider('Anzahl Re-Assemblys je linearem Lebenszyklus', min_value=1, max_value=5, value=2)
+    Anz_ReAss = st.slider("**Anzahl Re-Assemblys je linearem Lebenszyklus**", min_value=1, max_value=5, value=2)
 
-    with st.expander("Ökologie spezifische Merkmale"):
+    with st.expander("**Ökologie spezifische Merkmale**"):
             FußabdruckErste = st.slider('Fußabdruck der 1. Re-Assembly bezogen auf den Fußabdruck einer Neuproduktion [%]', min_value=0, max_value=100, value=10, format="%d %%")
             FußabdruckSteigung = st.slider('Steigung des Fußabdrucks von einer Re-Assembly zur nächsten  [%-punkte]', min_value=0, max_value=50, value=10, format="%d %%")
             FußabdruckZweite = st.slider('Fußabdruck der 1. großen Re-Assembly bezogen auf die Kosten einer Neuproduktion [%]', min_value=0, max_value=100, value=40, format="%d %%")
@@ -31,10 +31,10 @@ with st.sidebar:
             FußabdruckNutzung = st.number_input('Fußabdruck der Nutzung bezogen auf den Fußabdruck der Neuproduktion [%]', min_value=0, value=50)
             FußabdruckNutzungVerb = st.slider('Stärke der vorzeitigen Effizienzsteigerung durch Re-Assembly  [0 = nicht vorhanden - 10 = sehr stark]', min_value=0, max_value=10, value=5)
 
-    with st.expander("Kundennutzen spezifische Merkmale"):
+    with st.expander("**Kundennutzen spezifische Merkmale**"):
         Innovation = st.slider('Särke des Innovationsrückgangs [0 = nicht vorhanden - 10 = sehr stark]', min_value=0, max_value=10, value=5)
         
-    with st.expander("Ökonomie spezifische Merkmale"):
+    with st.expander("**Ökonomie spezifische Merkmale**"):
             KostenErste = st.slider('Kosten der 1. kleinen Re-Assembly bezogen auf die Kosten einer Neuproduktion [%]', min_value=0, max_value=100, value=10, format="%d %%")
             KostenSteigung = st.slider('Steigung der Kosten von einer kleinen Re-Assembly zur nächsten [%-punkte]', min_value=0, max_value=50, value=5, format="%d %%")
             KostenZweite = st.slider('Kosten der 1. großen Re-Assembly bezogen auf die Kosten einer Neuproduktion [%]', min_value=0, max_value=100, value=40, format="%d %%")
@@ -87,12 +87,19 @@ okologRe_y_values = []
 okologRe_x_values.append(0)
 okologRe_y_values.append(0)
 
-okologRe_y_temp = 100  # Der erste Sprung auf (0, 100)
+# Der erste Sprung auf 100
+okologRe_y_temp = 100  
 okologRe_x_values.append(0)
 okologRe_y_values.append(okologRe_y_temp)
 
+# Weiterer Kurvenverlauf
 for okologRe_i in range(1, int(20*Anz_ReAss) + 1):
-    okologRe_y_temp += 100 * FußabdruckNutzung /100 /Anz_ReAss * (1-(FußabdruckNutzungVerb / 10))
+    
+    if (okologRe_i-1) % Anz_ReAss == 0: # Re-Assemblys, die mit einer Neuproduktion zusammenfallen sollen keine vorzeitige Verbesserung haben
+        okologRe_y_temp += 100 * FußabdruckNutzung /100 /Anz_ReAss
+    else:
+        okologRe_y_temp += 100 * FußabdruckNutzung /100 /Anz_ReAss * (1-(FußabdruckNutzungVerb / 10))
+    
     okologRe_x_values.append(okologRe_i/Anz_ReAss)
     okologRe_y_values.append(okologRe_y_temp)
 
@@ -159,6 +166,7 @@ for i in range(1, len(df_interpolated)):
         # Wechsel von positiv zu negativ
         if okolog_max_pos_to_neg_x is None or df_interpolated['x'].iloc[i] > okolog_max_pos_to_neg_x:
             okolog_max_pos_to_neg_x = df_interpolated['x'].iloc[i]
+
 
 # Fenstergrenzen berechnen
 if okolog_min_neg_to_pos_x is None:
@@ -277,7 +285,7 @@ kunde_re_data = {
 kunde_re_df = pd.DataFrame(kunde_re_data)
 
 
-# Berechnung des gleitenden Durchschnitts über ein Fenster von Größe 'window'
+# Berechnung des gleitenden Durchschnitts
 window_size = int(len(kunde_re_df) / len(np.unique(kunde_re_df["KundeRe_X_Werte"]))) * 50
 floating_average_Re_asymmetric = (
     pd.Series(kunde_re_df["KundeRe_Y_Werte"])
@@ -306,12 +314,12 @@ for idx in kunde_diff_indices:
             Kunde_schnittpunkt_x = x_a - y_a * (x_b - x_a) / (y_b - y_a)
             kunde_schnittpunkte.append(Kunde_schnittpunkt_x)
 
+
 kunde_schnittpunkt_sweetspot = max(kunde_schnittpunkte)
 kunde_sweetspot = int(kunde_schnittpunkt_sweetspot*Anz_ReAss) - 1
 
 ## Kundennutzen Fenster Berechnen
 kunde_fenster_low = 1
-
 
 
 kunde_korridor_unten_df = 65 + (10 * (np.array(scaled_kundeRe_x_values)))
@@ -328,9 +336,19 @@ for idx in kunde_ReUndKorridor_indices:
             schnitt_x = x_d - y_d * (x_e-x_d)/(y_e-y_d)
             kunde_ReUndKorridor_Schnittpunkte.append(schnitt_x)
 
-if kunde_ReUndKorridor_Schnittpunkte:   
-    kunde_fenster_high  = int (min (kunde_ReUndKorridor_Schnittpunkte))
+if kunde_ReUndKorridor_Schnittpunkte:
+    kunde_fenster_schnitt_high = min (kunde_ReUndKorridor_Schnittpunkte)  
+    kunde_fenster_high  = int (kunde_fenster_schnitt_high)
 else: kunde_fenster_high="fehler"
+
+# Verlauf bei Neustart am Re-wind Punkt Liniendiagramm Werte
+kundeRe_neustart_x_values = [x + ((kunde_sweetspot + 1)/Anz_ReAss) for x in scaled_kundeRe_x_values]
+kunde_neustart_y_value =  100 + 10 *  ((kunde_sweetspot + 1)/Anz_ReAss) # Punkt von obere Korridor Grenze
+kundeRe_neustart_y_values = [y + kunde_neustart_y_value - 100 for y in kundeRe_y_values] #-100 weil bei x=0 bei 100 startet
+
+
+# Y-Ausdehnung ermitteln
+kunde_xWindow_max_y_value = 100 + 10 * (kunde_fenster_high/Anz_ReAss +1)  
 
 
 
@@ -461,6 +479,7 @@ else:
 okonomRe_neustart_x_values = [x + ((okonom_sweetspot/Anz_ReAss)+(1/Anz_ReAss)) for x in okonomRe_x_values]
 okonomRe_neustart_y_values = [y + okonom_neustart_y_value for y in okonomRe_y_values]
 
+# Y-Ausdehnung ermitteln
 okonom_xWindow_max_y_value = 0
 for i in range(len(okonom_x_values)):
     if okonomRe_neustart_x_values[i] == int(okonom_max_pos_to_neg_x+1) :
@@ -561,7 +580,7 @@ with st.expander("**Ökologie Diagramm**"):
         xaxis=dict(title='Lineare Lebenszyklen', side='bottom', tickmode='linear', dtick=1, range=[-0.01, int(okolog_max_pos_to_neg_x)+1.01]),
         xaxis2=dict(title='Sekundäre X-Achse', side='bottom', anchor='free', position=0.2),
         yaxis=dict(title='Kumulierter ökologischer Fußabdruck', showticklabels=False, range=[0, okolog_xWindow_max_y_value*1.2]),
-        legend=dict(x=0, y=0.9, xanchor='left', yanchor='bottom', bgcolor='rgba(0,0,0,0)'),
+        legend=dict(x=0, y=1, xanchor='left', yanchor='bottom', bgcolor='rgba(0,0,0,0)'),
     )
 
 
@@ -657,14 +676,72 @@ with st.expander("**Kundennutzen Diagramm**"):
         fillcolor='rgba(128,128,128,0.1)',
         line=dict(color='rgba(255,255,255,0)'),
         showlegend=False,
-))
+    ))
+
+    
+    # Hinzufügen der Re-Assembly kurve nach dem Re-Wind Punkt
+    fig_kunde_plotly.add_trace(go.Scatter(
+        x=kundeRe_neustart_x_values,
+        y=kundeRe_neustart_y_values,
+        mode="lines",
+        name="Re-Assembly Produkt: Zweiter Kreislauf",
+        line=dict(dash='dot', color='lightgreen')
+    ))
+
+    # Fenster Bereich plotten
+    fig_kunde_plotly.add_shape(type="rect",
+                x0=0.5, x1= (kunde_fenster_schnitt_high/Anz_ReAss),
+                y0=0, y1=kunde_xWindow_max_y_value,
+                fillcolor="orange",
+                opacity=0.1,
+                layer="below",
+                line_width=0)
+    
+    # Füge ein Icon zur linken Grenze hinzu
+    fig_kunde_plotly.add_annotation(
+        x=0.5,
+        y=kunde_xWindow_max_y_value*0.5,
+        text="➡️",
+        showarrow=False,
+        font=dict(size=15),
+    )
+
+    # Füge ein Icon zur rechten Grenze hinzu
+    fig_kunde_plotly.add_annotation(
+        x=(kunde_fenster_schnitt_high/Anz_ReAss),
+        y=kunde_xWindow_max_y_value*0.5,
+        text="⬅️",
+        showarrow=False,
+        font=dict(size=15),
+    )
+
+    # Sweetspot Indikator plotten
+        # Werte für Sweetspot indikator linie
+    kunde_sweetspot_marker_x_values = [kunde_sweetspot/Anz_ReAss, kunde_schnittpunkt_sweetspot, kunde_schnittpunkt_sweetspot]
+    kunde_sweetspot_marker_y_values = [0, 20, kunde_xWindow_max_y_value]
+    fig_kunde_plotly.add_trace(go.Scatter(
+        x=kunde_sweetspot_marker_x_values,
+        y=kunde_sweetspot_marker_y_values,
+        mode='lines',
+        line=dict(color="red", width=2),
+        showlegend=False))
+    
+    # Füge ein Icon hinzu zum Neustartzeitpunkt
+    fig_kunde_plotly.add_annotation(
+        x=kunde_schnittpunkt_sweetspot,
+        y=kunde_xWindow_max_y_value,
+        text="🔄",
+        showarrow=False,
+        font=dict(size=20),
+    )
 
     fig_kunde_plotly.update_layout(
-        xaxis=dict(title='Lineare Lebenszyklen', side='bottom', tickmode='linear', dtick=1),
+        xaxis=dict(title='Lineare Lebenszyklen', side='bottom', tickmode='linear', dtick=1, range=[-0.01, int(kunde_fenster_schnitt_high/Anz_ReAss) +2.1]),
         xaxis2=dict(title='Sekundäre X-Achse', side='bottom', anchor='free', position=0.2),
-        yaxis=dict(title='Kundennutzen', showticklabels=False),
-        legend=dict(x=0, y=0.95, xanchor='left', yanchor='bottom', bgcolor='rgba(0,0,0,0)'),
+        yaxis=dict(title='Kundennutzen', showticklabels=False, range=[0, kunde_xWindow_max_y_value*1.2]),
+        legend=dict(x=0, y=1, xanchor='left', yanchor='bottom', bgcolor='rgba(0,0,0,0)'),
     )
+
 
     st.plotly_chart(fig_kunde_plotly)
 
