@@ -96,7 +96,7 @@ okologRe_y_values.append(okologRe_y_temp)
 for okologRe_i in range(1, int(20*Anz_ReAss) + 1):
     
     if (okologRe_i-1) % Anz_ReAss == 0: # Re-Assemblys, die mit einer Neuproduktion zusammenfallen sollen keine vorzeitige Verbesserung haben
-        okologRe_y_temp += 100 * FußabdruckNutzung /100 /Anz_ReAss
+        okologRe_y_temp += 100 * FußabdruckNutzung /100 /Anz_ReAss - 1 #-1 damit marker für Sweetspot an rechten rand des Bereichs rutscht, in dem der Vorteil konstant ist/wäre
     else:
         okologRe_y_temp += 100 * FußabdruckNutzung /100 /Anz_ReAss * (1-(FußabdruckNutzungVerb / 10))
     
@@ -494,6 +494,7 @@ st.divider(width="stretch")
 st.subheader('Einfach in der Sidebar (links) produktspezifische Merkamale eingeben ...')
 st.subheader('... und Re-Wind Diagramme anzeigen lassen')
 
+
 # Diagramm anzeigen Ökologie
 with st.expander("**Ökologie Diagramm**"):
 
@@ -576,12 +577,33 @@ with st.expander("**Ökologie Diagramm**"):
             font=dict(size=20),
         )
 
+
+    #Zweite X-Achse für Re-Assembly Zählung mit leerem Datensatz initialisieren
+    okolog_x_values_Re = [x * Anz_ReAss for x in okolog_x_values]
+    fig_okolog_plotly.add_trace(go.Scatter(
+        x= okolog_x_values_Re,
+        y=[],
+        xaxis='x2',
+          
+    ))
+   
+    
     fig_okolog_plotly.update_layout(
-        xaxis=dict(title='Lineare Lebenszyklen', side='bottom', tickmode='linear', dtick=1, range=[-0.01, int(okolog_max_pos_to_neg_x)+1.01]),
-        xaxis2=dict(title='Sekundäre X-Achse', side='bottom', anchor='free', position=0.2),
-        yaxis=dict(title='Kumulierter ökologischer Fußabdruck', showticklabels=False, range=[0, okolog_xWindow_max_y_value*1.2]),
+        xaxis=dict(title=dict(text='Lineare Lebenszyklen',font=dict(color="darkblue")), side='bottom', tickmode='linear', dtick=1, tickfont=dict(color='darkblue'), position=0.05, range=[-0.01, int(okolog_max_pos_to_neg_x)+1.01]),
+        xaxis2=dict(title=dict(text="Re-Assemblys",font=dict(color="lightgreen")), side='bottom', tickmode='linear', dtick=1, tickfont=dict(color='lightgreen'), overlaying='x', position=0, range=[-0.01, (int(okolog_max_pos_to_neg_x)+1.01)*Anz_ReAss]),
+        yaxis=dict(title='Kumulierter ökologischer Fußabdruck', showticklabels=False, range=[-100, okolog_xWindow_max_y_value*1.2]),
         legend=dict(x=0, y=1, xanchor='left', yanchor='bottom', bgcolor='rgba(0,0,0,0)'),
-    )
+        )
+
+
+
+
+    # fig_okolog_plotly.update_layout(
+    #     xaxis=dict(title='Lineare Lebenszyklen', side='bottom', tickmode='linear', dtick=1, range=[-0.01, int(okolog_max_pos_to_neg_x)+1.01]),
+    #     xaxis2=dict(title='Sekundäre X-Achse', side='bottom', anchor='free', position=0.2),
+    #     yaxis=dict(title='Kumulierter ökologischer Fußabdruck', showticklabels=False, range=[0, okolog_xWindow_max_y_value*1.2]),
+    #     legend=dict(x=0, y=1, xanchor='left', yanchor='bottom', bgcolor='rgba(0,0,0,0)'),
+    # )
 
 
     st.plotly_chart(fig_okolog_plotly)
@@ -700,7 +722,7 @@ with st.expander("**Kundennutzen Diagramm**"):
     # Füge ein Icon zur linken Grenze hinzu
     fig_kunde_plotly.add_annotation(
         x=0.5,
-        y=kunde_xWindow_max_y_value*0.5,
+        y=kunde_xWindow_max_y_value*0.4,
         text="➡️",
         showarrow=False,
         font=dict(size=15),
@@ -709,7 +731,7 @@ with st.expander("**Kundennutzen Diagramm**"):
     # Füge ein Icon zur rechten Grenze hinzu
     fig_kunde_plotly.add_annotation(
         x=(kunde_fenster_schnitt_high/Anz_ReAss),
-        y=kunde_xWindow_max_y_value*0.5,
+        y=kunde_xWindow_max_y_value*0.4,
         text="⬅️",
         showarrow=False,
         font=dict(size=15),
@@ -735,10 +757,21 @@ with st.expander("**Kundennutzen Diagramm**"):
         font=dict(size=20),
     )
 
+    
+    #Zweite X-Achse für Re-Assembly Zählung mit leerem Datensatz initialisieren
+    kunde_x_values_Re = [x * Anz_ReAss for x in kunde_x_values]
+    fig_kunde_plotly.add_trace(go.Scatter(
+        x= kunde_x_values_Re,
+        y=[],
+        xaxis='x2',
+          
+    ))
+   
+     
     fig_kunde_plotly.update_layout(
-        xaxis=dict(title='Lineare Lebenszyklen', side='bottom', tickmode='linear', dtick=1, range=[-0.01, int(kunde_fenster_schnitt_high/Anz_ReAss) +2.1]),
-        xaxis2=dict(title='Sekundäre X-Achse', side='bottom', anchor='free', position=0.2),
-        yaxis=dict(title='Kundennutzen', showticklabels=False, range=[0, kunde_xWindow_max_y_value*1.2]),
+        xaxis=dict(title=dict(text='Lineare Lebenszyklen',font=dict(color="darkblue")), side='bottom', tickmode='linear', dtick=1, range=[-0.01, int(kunde_fenster_schnitt_high)/Anz_ReAss +2.1], tickfont=dict(color='darkblue'), position=0.06),
+        xaxis2=dict(title=dict(text="Re-Assemblys",font=dict(color="lightgreen")), overlaying='x', side='bottom', layer="above traces", tickmode='linear', dtick=1, range=[-0.01, int(kunde_fenster_schnitt_high) +2.1*Anz_ReAss], tickfont=dict(color='lightgreen'), position=0),
+        yaxis=dict(title='Kundennutzen', showticklabels=False, range=[-kunde_xWindow_max_y_value*0.1, kunde_xWindow_max_y_value*1.2]),
         legend=dict(x=0, y=1, xanchor='left', yanchor='bottom', bgcolor='rgba(0,0,0,0)'),
     )
 
@@ -807,11 +840,20 @@ with st.expander("**Ökonomie Diagramm**"):
         line=dict(color='lightgreen')
     ))
 
-
+    #Zweite X-Achse für Re-Assembly Zählung mit leerem Datensatz initialisieren
+    okonom_x_values_Re = [x * Anz_ReAss for x in okonom_x_values]
+    fig_okonom_plotly.add_trace(go.Scatter(
+        x= okonom_x_values_Re,
+        y=[],
+        xaxis='x2',
+          
+    ))
+   
+    
     fig_okonom_plotly.update_layout(
-         xaxis=dict(title='Lineare Lebenszyklen', side='bottom', tickmode='linear', dtick=1, range=[-0.01, int(okonom_max_pos_to_neg_x)+1.01]),
-        xaxis2=dict(title='Sekundäre X-Achse', side='bottom', anchor='free', position=0.2),
-        yaxis=dict(title='Kumulierter ökologischer Fußabdruck', showticklabels=False, range=[-105, okonom_xWindow_max_y_value*1.2]),
+        xaxis=dict(title=dict(text='Lineare Lebenszyklen',font=dict(color="darkblue")), side='bottom', tickmode='linear', dtick=1, tickfont=dict(color='darkblue'), position=0.05, range=[-0.01, int(okonom_max_pos_to_neg_x)+1.01]),
+        xaxis2=dict(title=dict(text="Re-Assemblys",font=dict(color="lightgreen")), side='bottom', tickmode='linear', dtick=1, tickfont=dict(color='lightgreen'), overlaying='x', position=0, range=[-0.01, (int(okonom_max_pos_to_neg_x)+1.01)*Anz_ReAss]),
+        yaxis=dict(title='Kumulierter ökologischer Fußabdruck', showticklabels=False, range=[-100-okonom_xWindow_max_y_value*0.1, okonom_xWindow_max_y_value*1.2]),
         legend=dict(x=0, y=1, xanchor='left', yanchor='bottom', bgcolor='rgba(0,0,0,0)'),
         )
 
@@ -1139,3 +1181,31 @@ def product_dialog():
 if "vote" not in st.session_state:
     if st.sidebar.button('PDF Bericht erstellen'):
         product_dialog()
+
+
+
+# Beispiel-Daten
+x1 = [1, 2, 3, 4]
+y1 = [10, 15, 13, 17]
+
+x2 = [5, 6, 7, 8]
+y2 = [20, 25, 22, 27]
+
+# Erstelle eine Figur mit Plotly
+fig = go.Figure()
+
+# Füge die erste Traces hinzu
+fig.add_trace(go.Scatter(x=x1, y=y1, mode='lines+markers', name='Datenreihe 1'))
+
+# Füge die zweite Traces hinzu und nutze die sekundäre x-Achse
+fig.add_trace(go.Scatter(x=x2, y=y2, mode='lines+markers', name='Datenreihe 2', xaxis='x2'))
+
+# Aktualisiere Layout für die zweite x-Achse
+fig.update_layout(
+    xaxis=dict(title="X-Achse"),
+    xaxis2=dict(title="Sekundäre X-Achse", overlaying='x', side='bottom'),
+    yaxis=dict(title="Y-Achse"),
+)
+
+# Zeige das Diagramm in Streamlit an
+st.plotly_chart(fig)
