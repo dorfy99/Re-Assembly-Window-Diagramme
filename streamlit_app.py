@@ -254,11 +254,11 @@ KundeRe_y_temp = 100
 kundeRe_x_values.append(0)
 kundeRe_y_values.append(KundeRe_y_temp)
 
-# Erstellen des Datensatzes
+# Erstellen des Datensatzes Re-Assembly
 for kundeRe_i in range(1, int(20 * Anz_ReAss + 1)):
     num_points = 25  # Reduzierung der Anzahl Punkte 
     kundeRe_x_cosine = np.linspace(kundeRe_i - 1, kundeRe_i, num=num_points)
-    kundeRe_y_cosine = KundeRe_y_temp - (25/(Anz_ReAss) * (1 - np.cos((np.pi / 2) * (kundeRe_x_cosine - (kundeRe_i -1 )))))
+    kundeRe_y_cosine = KundeRe_y_temp - (25/(Anz_ReAss*Anz_ReAss) * (1 - np.cos((np.pi / 2) * (kundeRe_x_cosine - (kundeRe_i -1 )))))
     
     # Hinzufügen der interpolierten Punkte zum Datensatz
     kundeRe_x_values.extend(kundeRe_x_cosine)
@@ -1183,29 +1183,3 @@ if "vote" not in st.session_state:
         product_dialog()
 
 
-
-# Beispiel-Daten
-x1 = [1, 2, 3, 4]
-y1 = [10, 15, 13, 17]
-
-x2 = [5, 6, 7, 8]
-y2 = [20, 25, 22, 27]
-
-# Erstelle eine Figur mit Plotly
-fig = go.Figure()
-
-# Füge die erste Traces hinzu
-fig.add_trace(go.Scatter(x=x1, y=y1, mode='lines+markers', name='Datenreihe 1'))
-
-# Füge die zweite Traces hinzu und nutze die sekundäre x-Achse
-fig.add_trace(go.Scatter(x=x2, y=y2, mode='lines+markers', name='Datenreihe 2', xaxis='x2'))
-
-# Aktualisiere Layout für die zweite x-Achse
-fig.update_layout(
-    xaxis=dict(title="X-Achse"),
-    xaxis2=dict(title="Sekundäre X-Achse", overlaying='x', side='bottom'),
-    yaxis=dict(title="Y-Achse"),
-)
-
-# Zeige das Diagramm in Streamlit an
-st.plotly_chart(fig)
