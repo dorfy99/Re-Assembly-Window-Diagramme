@@ -9,6 +9,10 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm
+from reportlab.lib.utils import ImageReader
+from reportlab.platypus import Table, TableStyle
+from reportlab.lib import colors
+import io
 
 
 
@@ -24,24 +28,25 @@ with st.sidebar:
     Anz_ReAss = st.slider("**Anzahl Re-Assemblys je linearem Lebenszyklus**", min_value=1, max_value=5, value=2)
 
     with st.expander("**Ökologie spezifische Merkmale**"):
-            FußabdruckErste = st.slider('Fußabdruck der 1. Re-Assembly bezogen auf den Fußabdruck einer Neuproduktion [%]', min_value=0, max_value=100, value=10, format="%d %%")
-            FußabdruckSteigung = st.slider('Steigung des Fußabdrucks von einer Re-Assembly zur nächsten  [%-punkte]', min_value=0, max_value=50, value=10, format="%d %%")
-            FußabdruckZweite = st.slider('Fußabdruck der 1. großen Re-Assembly bezogen auf die Kosten einer Neuproduktion [%]', min_value=0, max_value=100, value=40, format="%d %%")
-            FußabdruckZweiteSteigung = st.slider ('Steigung des Fußabdrucks von einer großen Re-Assembly zur nächsten [%-punkte]', min_value=0, max_value=50, value=5, format="%d %%")
-            FußabdruckNutzung = st.number_input('Fußabdruck der Nutzung bezogen auf den Fußabdruck der Neuproduktion [%]', min_value=0, value=50)
-            FußabdruckNutzungVerb = st.slider('Stärke der vorzeitigen Effizienzsteigerung durch Re-Assembly  [0 = nicht vorhanden - 10 = sehr stark]', min_value=0, max_value=10, value=5)
-
-    with st.expander("**Kundennutzen spezifische Merkmale**"):
-        Innovation = st.slider('Särke des Innovationsrückgangs [0 = nicht vorhanden - 10 = sehr stark]', min_value=0, max_value=10, value=5)
+            FußabdruckErste = st.slider('Fußabdruck der 1. kleinen Re-Assembly bezogen auf den, einer Neuproduktion [%]', min_value=0, max_value=100, value=15, format="%d %%")
+            FußabdruckSteigung = st.slider('Steigung des Fußabdrucks von einer kleinen Re-Assembly zur nächsten  [%-punkte]', min_value=0, max_value=50, value=10, format="%d %%")
+            FußabdruckZweite = st.slider('Fußabdruck der 1. großen Re-Assembly bezogen auf den, einer Neuproduktion [%]', min_value=0, max_value=100, value=45, format="%d %%")
+            FußabdruckZweiteSteigung = st.slider ('Steigung des Fußabdrucks von einer großen Re-Assembly zur nächsten [%-punkte]', min_value=0, max_value=50, value=15, format="%d %%")
+            FußabdruckNutzung = st.number_input('Fußabdruck in der Nutzung bezogen auf den Fußabdruck einer Neuproduktion [%]', min_value=0, value=100)
+            FußabdruckNutzungVerb = st.slider('Grad der vorzeitigen Effizienzsteigerung durch Re-Assembly  [0 = nicht vorhanden - 10 = sehr stark]', min_value=0, max_value=10, value=5)
         
     with st.expander("**Ökonomie spezifische Merkmale**"):
-            KostenErste = st.slider('Kosten der 1. kleinen Re-Assembly bezogen auf die Kosten einer Neuproduktion [%]', min_value=0, max_value=100, value=10, format="%d %%")
-            KostenSteigung = st.slider('Steigung der Kosten von einer kleinen Re-Assembly zur nächsten [%-punkte]', min_value=0, max_value=50, value=5, format="%d %%")
-            KostenZweite = st.slider('Kosten der 1. großen Re-Assembly bezogen auf die Kosten einer Neuproduktion [%]', min_value=0, max_value=100, value=40, format="%d %%")
-            KostenZweiteSteigung = st.slider ('Steigung der Kosten von einer großen Re-Assembly zur nächsten [%-punkte]', min_value=0, max_value=50, value=5, format="%d %%")
-            Subskription = st.number_input('Höhe der Subskriptionserlöse in einem linearen Lebenszyklus bezogen auf den Verkaufserlös eines linearen Produkts [%]', min_value=0, value=120)
-            Marge = st.slider('Marge: Anteil der Herstellungskosten am Verkaufspreis [%]', min_value=0, max_value=100, value=60, format="%d %%")
+            KostenErste = st.slider('Kosten der 1. kleinen Re-Assembly bezogen auf die, einer Neuproduktion [%]', min_value=0, max_value=100, value=15, format="%d %%")
+            KostenSteigung = st.slider('Steigung der Kosten von einer kleinen Re-Assembly zur nächsten [%-punkte]', min_value=0, max_value=50, value=10, format="%d %%")
+            KostenZweite = st.slider('Kosten der 1. großen Re-Assembly bezogen auf die, einer Neuproduktion [%]', min_value=0, max_value=100, value=45, format="%d %%")
+            KostenZweiteSteigung = st.slider ('Steigung der Kosten von einer großen Re-Assembly zur nächsten [%-punkte]', min_value=0, max_value=50, value=15, format="%d %%")
+            Marge = st.slider('Anteil der Herstellungskosten am Verkaufspreis [%]', min_value=0, max_value=100, value=60, format="%d %%")
+            Subskription = st.number_input('Höhe der Subskriptionserlöse in einem linearen Lebenszyklus bezogen auf den linearen Verkaufserlös [%]', min_value=0, value=120)
+            
 
+    with st.expander("**Kundennutzen spezifische Merkmale**"):
+        Innovation = st.slider('Grad des Innovationsrückgangs [0 = nicht vorhanden - 10 = sehr stark]', min_value=0, max_value=10, value=5)
+    
 
     st.divider(width="stretch")
 
@@ -649,6 +654,145 @@ with st.expander("**Ökologie Diagramm**"):
             """, unsafe_allow_html=True)
 
 
+## Diagramm anzeigen Ökonomie
+with st.expander("**Ökonomie Diagramm**"):
+
+    fig_okonom_plotly= go.Figure()
+
+    fig_okonom_plotly.add_trace(go.Scatter(
+        x=okonom_x_values,
+        y=okonom_y_values,
+        mode="lines",
+        name="Produkt mit linearer Nutzung",
+        line=dict(color='darkblue')
+    ))
+
+    fig_okonom_plotly.add_trace(go.Scatter(
+        x=okonomRe_x_values,
+        y=okonomRe_y_values,
+        mode="lines",
+        name="Produkt mit linearer Nutzung",
+        line=dict(color='lightgreen')
+    ))
+
+    #Zweite X-Achse für Re-Assembly Zählung mit leerem Datensatz initialisieren
+    okonom_x_values_Re = [x * Anz_ReAss for x in okonom_x_values]
+    fig_okonom_plotly.add_trace(go.Scatter(
+        x= okonom_x_values_Re,
+        y=[],
+        xaxis='x2',
+          
+    ))
+   
+    
+    fig_okonom_plotly.update_layout(
+        xaxis=dict(title=dict(text='Lineare Lebenszyklen',font=dict(color="darkblue")), side='bottom', tickmode='linear', dtick=1, tickfont=dict(color='darkblue'), position=0.05, range=[-0.01, int(okonom_max_pos_to_neg_x)+1.01]),
+        xaxis2=dict(title=dict(text="Re-Assemblys",font=dict(color="lightgreen")), side='bottom', tickmode='linear', dtick=1, tickfont=dict(color='lightgreen'), overlaying='x', position=0, range=[-0.01, (int(okonom_max_pos_to_neg_x)+1.01)*Anz_ReAss]),
+        yaxis=dict(title='Kumulierter ökologischer Fußabdruck', showticklabels=False, range=[-100-okonom_xWindow_max_y_value*0.1, okonom_xWindow_max_y_value*1.2]),
+        legend=dict(x=0, y=1, xanchor='left', yanchor='bottom', bgcolor='rgba(0,0,0,0)'),
+        )
+
+    if okonom_min_neg_to_pos_x != None: #Abfrage ob Fenster vorhanden
+        # Hinzufügen der Re-Assembly kurve nach dem Re-Wind Punkt
+        fig_okonom_plotly.add_trace(go.Scatter(
+            x=okonomRe_neustart_x_values,
+            y=okonomRe_neustart_y_values,
+            mode="lines",
+            name="Re-Assembly Produkt: Zweiter Kreislauf",
+            line=dict(dash='dot', color='lightgreen')
+        ))
+
+        # Fenster Bereich plotten
+        fig_okonom_plotly.add_shape(type="rect",
+            x0=okonom_min_neg_to_pos_x, x1=okonom_max_pos_to_neg_x,
+            y0=0,
+            y1=okonom_xWindow_max_y_value,
+            fillcolor="orange",
+            opacity=0.1,
+            layer="below",
+            line_width=0)
+    
+        # Füge ein Icon zur linken Grenze hinzu
+        fig_okonom_plotly.add_annotation(
+            x=okonom_min_neg_to_pos_x,
+            y=okonom_xWindow_max_y_value*0.5,
+            text="➡️",
+            showarrow=False,
+            font=dict(size=15),
+        )
+
+        # Füge ein Icon zur rechten Grenze hinzu
+        fig_okonom_plotly.add_annotation(
+            x=okonom_max_pos_to_neg_x,
+            y=okonom_xWindow_max_y_value*0.5,
+            text="⬅️",
+            showarrow=False,
+            font=dict(size=15),
+        )
+
+        # Sweetspot Indikator plotten
+        okonom_sweetspot_marker_x_values = [okonom_sweetspot/Anz_ReAss, okonom_diff_max, okonom_diff_max]
+        okonom_sweetspot_marker_y_values = [0, 100, okonom_xWindow_max_y_value]
+        fig_okonom_plotly.add_trace(go.Scatter(
+            x=okonom_sweetspot_marker_x_values,
+            y=okonom_sweetspot_marker_y_values,
+            mode='lines',
+            line=dict(color="red", width=2),
+            showlegend=False))
+        
+        # Füge ein Icon hinzu zum Neustartzeitpunkt
+        fig_okonom_plotly.add_annotation(
+            x=okonom_diff_max,
+            y=okonom_xWindow_max_y_value,
+            text="🔄",
+            showarrow=False,
+            font=dict(size=20),
+        )
+    
+    st.plotly_chart(fig_okonom_plotly)
+
+# Fenster und Sweetspot anzeigen Ökonomie
+    col1, col2, col3 = st.columns(3)
+    if okonom_min_neg_to_pos_x == None: #Anzeige falls kein Fenster vorhanden
+        st.markdown(f"""
+            <div style="text-align: center; white-space: nowrap;">
+            <strong> Kein ReAssembly Fenster vorhanden</strong><br><br>
+            </div>
+            """, unsafe_allow_html=True)
+    
+    else: #Anzeige falls Fenster vorhanden
+
+        with col1:
+            st.markdown(f"""
+                <div style="text-align: center; white-space: nowrap;">
+                    <strong>➡️ Untere Fenstergrenze</strong><br>
+                    <span style="font-size: 24px;">≥</span> 
+                    <span style="font-size: 24px;">{(okonom_fenster_low)}</span>
+                    <span style="font-size: 14px;">Re-Assemblys</span>
+                </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown(f"""
+                <div style="text-align: center; white-space: nowrap;">
+                    <strong>🔄 Re-Wind Punkt</strong><br>
+                    <span style="font-size: 14px;">nach</span>
+                    <span style="font-size: 24px;">{okonom_sweetspot}</span>
+                    <span style="font-size: 14px;">Re-Assemblys</span>
+                </div>
+            """, unsafe_allow_html=True)
+
+        with col3:
+            st.markdown(f"""
+                <div style="text-align: center; white-space: nowrap;">
+                    <strong>⬅️ Obere Fenstergrenze</strong><br>
+                    <span style="font-size: 24px;">≤</span>
+                    <span style="font-size: 24px;">{okonom_fenster_high}</span>
+                    <span style="font-size: 14px;">Re-Assemblys</span>
+                </div>
+            """, unsafe_allow_html=True)
+
+
 ## Diagramm anzeigen Kundennutzen
 with st.expander("**Kundennutzen Diagramm**"):
    
@@ -819,145 +963,6 @@ with st.expander("**Kundennutzen Diagramm**"):
 
 
 
-## Diagramm anzeigen Ökonomie
-with st.expander("**Ökonomie Diagramm**"):
-
-    fig_okonom_plotly= go.Figure()
-
-    fig_okonom_plotly.add_trace(go.Scatter(
-        x=okonom_x_values,
-        y=okonom_y_values,
-        mode="lines",
-        name="Produkt mit linearer Nutzung",
-        line=dict(color='darkblue')
-    ))
-
-    fig_okonom_plotly.add_trace(go.Scatter(
-        x=okonomRe_x_values,
-        y=okonomRe_y_values,
-        mode="lines",
-        name="Produkt mit linearer Nutzung",
-        line=dict(color='lightgreen')
-    ))
-
-    #Zweite X-Achse für Re-Assembly Zählung mit leerem Datensatz initialisieren
-    okonom_x_values_Re = [x * Anz_ReAss for x in okonom_x_values]
-    fig_okonom_plotly.add_trace(go.Scatter(
-        x= okonom_x_values_Re,
-        y=[],
-        xaxis='x2',
-          
-    ))
-   
-    
-    fig_okonom_plotly.update_layout(
-        xaxis=dict(title=dict(text='Lineare Lebenszyklen',font=dict(color="darkblue")), side='bottom', tickmode='linear', dtick=1, tickfont=dict(color='darkblue'), position=0.05, range=[-0.01, int(okonom_max_pos_to_neg_x)+1.01]),
-        xaxis2=dict(title=dict(text="Re-Assemblys",font=dict(color="lightgreen")), side='bottom', tickmode='linear', dtick=1, tickfont=dict(color='lightgreen'), overlaying='x', position=0, range=[-0.01, (int(okonom_max_pos_to_neg_x)+1.01)*Anz_ReAss]),
-        yaxis=dict(title='Kumulierter ökologischer Fußabdruck', showticklabels=False, range=[-100-okonom_xWindow_max_y_value*0.1, okonom_xWindow_max_y_value*1.2]),
-        legend=dict(x=0, y=1, xanchor='left', yanchor='bottom', bgcolor='rgba(0,0,0,0)'),
-        )
-
-    if okonom_min_neg_to_pos_x != None: #Abfrage ob Fenster vorhanden
-        # Hinzufügen der Re-Assembly kurve nach dem Re-Wind Punkt
-        fig_okonom_plotly.add_trace(go.Scatter(
-            x=okonomRe_neustart_x_values,
-            y=okonomRe_neustart_y_values,
-            mode="lines",
-            name="Re-Assembly Produkt: Zweiter Kreislauf",
-            line=dict(dash='dot', color='lightgreen')
-        ))
-
-        # Fenster Bereich plotten
-        fig_okonom_plotly.add_shape(type="rect",
-            x0=okonom_min_neg_to_pos_x, x1=okonom_max_pos_to_neg_x,
-            y0=0,
-            y1=okonom_xWindow_max_y_value,
-            fillcolor="orange",
-            opacity=0.1,
-            layer="below",
-            line_width=0)
-    
-        # Füge ein Icon zur linken Grenze hinzu
-        fig_okonom_plotly.add_annotation(
-            x=okonom_min_neg_to_pos_x,
-            y=okonom_xWindow_max_y_value*0.5,
-            text="➡️",
-            showarrow=False,
-            font=dict(size=15),
-        )
-
-        # Füge ein Icon zur rechten Grenze hinzu
-        fig_okonom_plotly.add_annotation(
-            x=okonom_max_pos_to_neg_x,
-            y=okonom_xWindow_max_y_value*0.5,
-            text="⬅️",
-            showarrow=False,
-            font=dict(size=15),
-        )
-
-        # Sweetspot Indikator plotten
-        okonom_sweetspot_marker_x_values = [okonom_sweetspot/Anz_ReAss, okonom_diff_max, okonom_diff_max]
-        okonom_sweetspot_marker_y_values = [0, 100, okonom_xWindow_max_y_value]
-        fig_okonom_plotly.add_trace(go.Scatter(
-            x=okonom_sweetspot_marker_x_values,
-            y=okonom_sweetspot_marker_y_values,
-            mode='lines',
-            line=dict(color="red", width=2),
-            showlegend=False))
-        
-        # Füge ein Icon hinzu zum Neustartzeitpunkt
-        fig_okonom_plotly.add_annotation(
-            x=okonom_diff_max,
-            y=okonom_xWindow_max_y_value,
-            text="🔄",
-            showarrow=False,
-            font=dict(size=20),
-        )
-    
-    st.plotly_chart(fig_okonom_plotly)
-
-# Fenster und Sweetspot anzeigen Ökonomie
-    col1, col2, col3 = st.columns(3)
-    if okonom_min_neg_to_pos_x == None: #Anzeige falls kein Fenster vorhanden
-        st.markdown(f"""
-            <div style="text-align: center; white-space: nowrap;">
-            <strong> Kein ReAssembly Fenster vorhanden</strong><br><br>
-            </div>
-            """, unsafe_allow_html=True)
-    
-    else: #Anzeige falls Fenster vorhanden
-
-        with col1:
-            st.markdown(f"""
-                <div style="text-align: center; white-space: nowrap;">
-                    <strong>➡️ Untere Fenstergrenze</strong><br>
-                    <span style="font-size: 24px;">≥</span> 
-                    <span style="font-size: 24px;">{(okonom_fenster_low)}</span>
-                    <span style="font-size: 14px;">Re-Assemblys</span>
-                </div>
-            """, unsafe_allow_html=True)
-        
-        with col2:
-            st.markdown(f"""
-                <div style="text-align: center; white-space: nowrap;">
-                    <strong>🔄 Re-Wind Punkt</strong><br>
-                    <span style="font-size: 14px;">nach</span>
-                    <span style="font-size: 24px;">{okonom_sweetspot}</span>
-                    <span style="font-size: 14px;">Re-Assemblys</span>
-                </div>
-            """, unsafe_allow_html=True)
-
-        with col3:
-            st.markdown(f"""
-                <div style="text-align: center; white-space: nowrap;">
-                    <strong>⬅️ Obere Fenstergrenze</strong><br>
-                    <span style="font-size: 24px;">≤</span>
-                    <span style="font-size: 24px;">{okonom_fenster_high}</span>
-                    <span style="font-size: 14px;">Re-Assemblys</span>
-                </div>
-            """, unsafe_allow_html=True)
-
-
 
 
 
@@ -970,25 +975,30 @@ def create_pdf(product_name):
     c = canvas.Canvas(pdf_file_path, pagesize=A4)  # A4-Größe in cm
     width, height = A4
     
-    # WZL Logo oben links    
-    c.drawImage("WZL_Logo2.png", 0.5 * cm, height - 1.6 * cm, width=5 * cm, height=1.33 * cm)
+    ## Kopfzeile vorberiten für alle Seiten
+    def kopfzeile():
+        # WZL Logo oben links    
+        c.drawImage("WZL_Logo2.png", 0.5 * cm, height - 1.6 * cm, width=5 * cm, height=1.33 * cm)
 
-    ## Disclaimer
-    c.setFont("Helvetica", 10)
-    disclaimer1 = "Erstellt mit einem Online-Tool des WZL der RWTH-Aachen"
-    disclaimer2 = "Verfügbar unter https://re-wind.streamlit.app/"
-    c.drawString((width - (c.stringWidth(disclaimer1)))/2, height - 0.7 * cm, disclaimer1)
-    c.drawString((width - (c.stringWidth(disclaimer2)))/2, height - 1.2 * cm, disclaimer2)
+        ## Disclaimer
+        c.setFont("Helvetica", 10)
+        disclaimer1 = "Erstellt mit einem Online-Tool des WZL der RWTH-Aachen"
+        disclaimer2 = "Verfügbar unter https://re-wind.streamlit.app/"
+        c.drawString((width - (c.stringWidth(disclaimer1)))/2, height - 0.7 * cm, disclaimer1)
+        c.drawString((width - (c.stringWidth(disclaimer2)))/2, height - 1.2 * cm, disclaimer2)
 
-    ## Datum
-    from datetime import datetime
-    current_date = datetime.now().strftime("%d.%m.%Y")
-    c.setFont("Helvetica", 10)
-    c.drawString(width - (1 * cm + c.stringWidth(current_date)), height - 1.2 * cm, current_date)
+        ## Datum
+        from datetime import datetime
+        current_date = datetime.now().strftime("%d.%m.%Y")
+        c.setFont("Helvetica", 10)
+        c.drawString(width - (1 * cm + c.stringWidth(current_date)), height - 1.2 * cm, current_date)
 
-    # Zeichne eine Linie unter dem Logo (Kopfzeile)
-    c.line(0.5 * cm, height - 1.5 * cm, width - 0.5 * cm, height - 1.5 * cm)  # Horizontale Linie
+        # Zeichne eine Linie unter dem Logo (Kopfzeile)
+        c.line(0.5 * cm, height - 1.5 * cm, width - 0.5 * cm, height - 1.5 * cm)  # Horizontale Linie
 
+
+    ## Kopfzeile einfügen
+    kopfzeile()
 
     ## Titel
     c.setFont("Helvetica-Bold", 18)
@@ -1016,12 +1026,12 @@ def create_pdf(product_name):
     c.drawString(2 * cm, height - 7 * cm, "Ökonomie spezifisch")
 
     c.setFont("Helvetica", 10)
-    oekolog_Eigenschaften_Benennung = ["Fußabdruck der 1. Re-Assembly bezogen auf den Fußabdruck einer Neuproduktion", 
-             "Steigung des Fußabdrucks von einer Re-Assembly zur nächsten",
-             "Fußabdruck der 1. großen Re-Assembly bezogen auf die Kosten einer Neuproduktion",
+    oekolog_Eigenschaften_Benennung = ["Fußabdruck der 1. kleinen Re-Assembly bezogen auf den, einer Neuproduktion", 
+             "Steigung des Fußabdrucks von einer kleinen Re-Assembly zur nächsten",
+             "Fußabdruck der 1. großen Re-Assembly bezogen auf den, einer Neuproduktion",
              "Steigung des Fußabdrucks von einer großen Re-Assembly zur nächsten",
-             "Fußabdruck der Nutzung bezogen auf den Fußabdruck der Neuproduktion",  
-             "Stärke der vorzeitigen Effizienzsteigerung durch Re-Assembly"]  
+             "Fußabdruck der Nutzung bezogen auf den Fußabdruck einer Neuproduktion",  
+             "Grad der vorzeitigen Effizienzsteigerung durch Re-Assembly"]  
     
     oekolog_Eigenschaften_Werte = [f"{FußabdruckErste} %", f"{FußabdruckSteigung} %-punkte", f"{FußabdruckZweite} %", f"{FußabdruckZweiteSteigung} %-punkte", 
               f"{FußabdruckNutzung} %", f"{FußabdruckNutzungVerb} (0-10)"]  
@@ -1032,112 +1042,122 @@ def create_pdf(product_name):
         c.drawString(16 * cm, oekolog_Eigenschaften_Tabelle, value) 
         oekolog_Eigenschaften_Tabelle -= 0.5 * cm
 
-    # Kundennutzen Eigenschaften in Tabelle
-    c.setFont("Helvetica-Bold", 10)
-    c.drawString(2 * cm, height - 11 * cm, "Kundennutzen spezifisch")
    
-    c.setFont("Helvetica", 10)
-    kunde_Eigenschaften_Benennung = ["Särke des Innovationsrückgangs"]
-
-    kunde_Eigenschaften_Werte = [f"{Innovation} (0-10)"]  
-    
-    kunde_Eigenschaften_Tabelle = height -11.5 * cm
-    for term, value in zip(kunde_Eigenschaften_Benennung, kunde_Eigenschaften_Werte):
-        c.drawString(2 * cm, kunde_Eigenschaften_Tabelle, term)
-        c.drawString(16 * cm, kunde_Eigenschaften_Tabelle, value) 
-        kunde_Eigenschaften_Tabelle -= 0.5 * cm
-
     # Ökonomische Eigenschaften in Tabelle
     c.setFont("Helvetica-Bold", 10)
-    c.drawString(2 * cm, height - 12.5 * cm, "Ökologie spezifisch")
+    c.drawString(2 * cm, height - 11 * cm, "Ökologie spezifisch")
 
     c.setFont("Helvetica", 10)
-    oekonom_Eigenschaften_Benennung = ["Kosten der 1. kleinen Re-Assembly bezogen auf die Kosten einer Neuproduktion", 
+    oekonom_Eigenschaften_Benennung = ["Kosten der 1. kleinen Re-Assembly bezogen auf die, einer Neuproduktion", 
              "Steigung der Kosten von einer kleinen Re-Assembly zur nächsten",
-             "Kosten der 1. großen Re-Assembly bezogen auf die Kosten einer Neuproduktion",
+             "Kosten der 1. großen Re-Assembly bezogen auf die, einer Neuproduktion",
              "Steigung der Kosten von einer großen Re-Assembly zur nächsten",
-             "Höhe der Subskriptionserlöse in einem linearen Lebenszyklus bezogen auf den Verkaufserlös eines linearen Produkts",  
-             "Marge: Anteil der Herstellungskosten am Verkaufspreis"]  
+             "Anteil der Herstellungskosten am Verkaufspreis",
+             "Höhe der Subskriptionserlöse in einem linearen Lebenszyklus",
+             "bezogen auf einen linearen Verkaufserlös"]  
     
     oekonom_Eigenschaften_Werte = [f"{KostenErste} %", f"{KostenSteigung} %-punkte", f"{KostenZweite} %", f"{KostenZweiteSteigung} %-punkte", 
-              f"{Subskription} %", f"{Marge} (0-10)"]  
+            f"{Marge} (0-10)", f"{Subskription} %",""]  
     
-    oekonom_Eigenschaften_Tabelle = height - 13 * cm
+    oekonom_Eigenschaften_Tabelle = height - 11.5 * cm
     for term, value in zip(oekonom_Eigenschaften_Benennung, oekonom_Eigenschaften_Werte):
         c.drawString(2 * cm, oekonom_Eigenschaften_Tabelle, term)
         c.drawString(16 * cm, oekonom_Eigenschaften_Tabelle, value) 
         oekonom_Eigenschaften_Tabelle -= 0.5 * cm
+
+
+     # Kundennutzen Eigenschaften in Tabelle
+    c.setFont("Helvetica-Bold", 10)
+    c.drawString(2 * cm, height - 15.5 * cm, "Kundennutzen spezifisch")
+   
+    c.setFont("Helvetica", 10)
+    kunde_Eigenschaften_Benennung = ["Grad des Innovationsrückgangs"]
+
+    kunde_Eigenschaften_Werte = [f"{Innovation} (0-10)"]  
+    
+    kunde_Eigenschaften_Tabelle = height -16 * cm
+    for term, value in zip(kunde_Eigenschaften_Benennung, kunde_Eigenschaften_Werte):
+        c.drawString(2 * cm, kunde_Eigenschaften_Tabelle, term)
+        c.drawString(16 * cm, kunde_Eigenschaften_Tabelle, value) 
+        kunde_Eigenschaften_Tabelle -= 0.5 * cm
     
 
     ## Untertitel: Gesamtergebnis
     c.setFont("Helvetica-Bold", 14)
-    c.drawString(2 * cm, height - 17.5 * cm, "Gesamtergebnis in den drei Dimensionen")
+    c.drawString(2 * cm, height - 18 * cm, "Gesamtergebnis in den drei Dimensionen")
 
-    # Setze die Startposition für die Tabelle
-    table_start_x = 2 * cm  # x-Position der Tabelle
-    table_start_y = height - 18 * cm  # y-Position der Tabelle (anpassbar)
+    ges_fenster_low = max(okolog_fenster_low,kunde_fenster_low, okonom_fenster_low)
+    ges_fenster_high = min(okolog_fenster_high, kunde_fenster_high, okonom_fenster_high)
+    min_sweetspot = min(okolog_sweetspot, kunde_sweetspot, okonom_sweetspot)
+    max_sweetspot = max(okolog_sweetspot, kunde_sweetspot, okonom_sweetspot)
 
-    # Tabellenparameter
-    num_rows = 4
-    num_cols = 4
-    cell_width = (width - 4 * cm) / num_cols  # Breite jeder Zelle
-    cell_height = 1 * cm  # Höhe jeder Zelle
 
-    # Zeichne Gitterlinien und fülle die Kopfzeile und erste Spalte aus
-    c.setFont("Helvetica-Bold", 10)
-
-    # Kopfzeile 
-    headers = ["", "Unterer Grenze", "Optimaler \n Abbruchzeitpunkt", "Obere Grenze"]
+    values = [["", "Unterer Grenze", "ReWind Punkt", "Obere Grenze"],
+                ["Ökologie", str(okolog_fenster_low), str(okolog_sweetspot), str(okolog_fenster_high)], 
+                ["Ökonomie", str(okonom_fenster_low), str(okonom_sweetspot), str(okonom_fenster_high)], 
+                ["Kundennutzen", str(kunde_fenster_low), str(kunde_sweetspot), str(kunde_fenster_high)],
+                ["Gesamt", str(ges_fenster_low), f"zwischen {min_sweetspot} & {max_sweetspot}", str(ges_fenster_high)]]
     
-    for col in range(num_cols):
-        c.drawString(table_start_x + col * cell_width + (cell_width / 2) - (c.stringWidth(headers[col]) / 2), 
-                     table_start_y, headers[col])
-        c.line(table_start_x + col * cell_width, table_start_y + cell_height,
-               table_start_x + col * cell_width, table_start_y - (num_rows) * cell_height)  # Vertikale Linie
+    table_ergebnisse=Table(values, colWidths=[100,100,100,100], rowHeights=[25,25,25,25,25], style=None, splitByRow=1, repeatRows=0, 
+            repeatCols=0, rowSplitRange=None, spaceBefore=None, spaceAfter=None, cornerRadii=None)
 
-        if col == num_cols - 1:  
-            c.line(table_start_x + col * cell_width, table_start_y + cell_height,
-                   table_start_x + col * cell_width, table_start_y - (num_rows) * cell_height)  
+    table_ergebnisse.setStyle(TableStyle([
+    ("ALIGN", (0, 0), (-1, -1), "CENTER"),   # horizontal zentriert
+    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),  # vertikal zentriert
+    ("GRID", (0, 0), (-1, -1), 1, colors.black),
+    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"), #erste Zeile fett
+    ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Oblique"), #letzte Zeile fett
+    ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"), #erste Spalte fett
+    ]))
 
+    # Tabelle vorbereiten
+    table_width, table_height = table_ergebnisse.wrapOn(c, 0, 0)
+
+    # X- und Y- Position setzen
+    table_ergebnisse.drawOn(c, 2*cm, height - 23* cm)
+
+       
+    # Seitenumbruch
+    c.showPage()
+
+    kopfzeile()
+
+    # Diagramme zu Bild konvertirern
+    def plotly_zu_image (fig, width=2000, heigt=800):
+        buf = io.BytesIO()
+        fig.write_image(buf, format="png", width=width, height=height)
+        buf.seek(0)
+        return buf
     
-    c.setFont("Helvetica-Bold", 10)
+    # Diagramme (als Bild) anzeigen
+    plots = [
+    ("Ökologie Diagramm", fig_okolog_plotly),
+    ("Ökonomie Diagramm", fig_okonom_plotly),
+    ("Kundennutzen Diagramm", fig_kunde_plotly)]
 
-    # Erste Spalte mit fettem Text 
-    first_column_labels = ["", "Ökologie", "Kundennutzen", "Ökonomie"]
-    
-    for row in range(1, num_rows):  
-        c.drawString(table_start_x + (cell_width / 2) - (c.stringWidth(first_column_labels[row]) / 2),
-                     table_start_y - row * cell_height - (cell_height / 2), first_column_labels[row])
+    y_cursor = height - 3*cm
+
+    for title, fig in plots:
+        # Überschrift linksbündig
+        c.setFont("Helvetica-Bold", 16)
+        c.drawString(2*cm, y_cursor, title)
+
+        # Plot in BytesIO PNG
+        img_buf = plotly_zu_image(fig)
+        img = ImageReader(img_buf)
+
+        # Seitenverhältnis & Größe
+        img_height = 7*cm
+        img_width = img_height * 2000/800 # siehe Verhältnis Breite/Höhe in bild Erstellung oben
         
-        c.line(table_start_x, 
-               table_start_y - row * cell_height,
-               table_start_x + width - (3*cm), 
-               table_start_y - row * cell_height)  
+        # Position auf der Seite
+        x_pos = (width - img_width)/2
+        y_cursor -= img_height + 1*cm  # Platz für Bild + Abstand
 
-        if row == num_rows-1:
-            c.line(table_start_x ,table_start_y-(row)*cell_height,
-                   width-(3*cm),table_start_y-(row)*cell_height)
-    
-   
-    # Füge Platzhalterwerte hinzu und zeichne Gitterlinien 
-    values_placeholder = [["Var1", "Var2", "Var3"], ["Var4", "Var5", "Var6"], ["Var7","Var8","Var9"]]
+        c.drawImage(img, x_pos, y_cursor, width=img_width, height=img_height)
 
-    for row in range(1,num_rows):
-       for col in range(1,num_cols):  
-           value_text=values_placeholder[row-1][col-1]  
-           x_pos=table_start_x+col*cell_width+(cell_width/2)-(c.stringWidth(value_text)/2)
-           y_pos=table_start_y-row*cell_height-(cell_height/2)
-           c.drawString(x_pos,y_pos,value_text)
-
-   # Ziehe horizontale und vertikale Linien für die gesamte Tabelle 
-    for i in range(num_rows+1):  
-       c.line(table_start_x ,table_start_y-i*cell_height,
-               width-(3*cm),table_start_y-i*cell_height)
-
-    for j in range(num_cols+1):  
-       c.line(table_start_x+j*cell_width ,table_start_y,
-               table_start_x+j*cell_width ,table_start_y-(num_rows)*cell_height)
-
+        # Abstand zwischen Plot und nächster Überschrift
+        y_cursor -= 1*cm
 
     c.save()  # PDF speichern
       
@@ -1146,13 +1166,14 @@ def create_pdf(product_name):
 
 
 ### Dialog Fenster zur Eingabe des Produktnamens und PDF-Erstellung
-@st.dialog("Produktname eingeben")
+@st.dialog("PDF Bericht erstellen")
 def product_dialog():
     product_name_input = st.text_input("Bitte geben Sie den Namen des Produkts oder Berichts ein:")
     
     if st.button("PDF generieren"):
         if product_name_input:
-            pdf_file_path = create_pdf(product_name_input)
+            with st.spinner("Einen Moment bitte...", show_time=True): # Ladebalken wird angezeigt
+                pdf_file_path = create_pdf(product_name_input)
 
             if pdf_file_path:
                 download_filename = f"ReWind_Analyse_{product_name_input}.pdf"
