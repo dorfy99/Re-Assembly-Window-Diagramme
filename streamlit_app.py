@@ -13,6 +13,9 @@ from reportlab.lib.utils import ImageReader
 from reportlab.platypus import Table, TableStyle
 from reportlab.lib import colors
 import io
+from svglib.svglib import svg2rlg
+from reportlab.graphics import renderPDF
+
 
 
 #### Sidebar mit Datenaufnahme 
