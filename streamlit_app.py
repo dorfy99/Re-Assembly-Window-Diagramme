@@ -13,8 +13,9 @@ from reportlab.lib.utils import ImageReader
 from reportlab.platypus import Table, TableStyle
 from reportlab.lib import colors
 import io
+import kaleido
 
-
+kaleido.get_chrome_sync()
 
 #### Sidebar mit Datenaufnahme 
 
