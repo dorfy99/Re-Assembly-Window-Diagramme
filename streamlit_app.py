@@ -519,6 +519,7 @@ for i in range(len(okonom_x_values)):
 
 ### Diagramme anzeigen
 st.title('Simulationstool zur Re-Wind-Analyse spezifischer Produkte')
+st.text("-- Diese App wird laufend verbessert. Senden Sie uns gerne Ihre Anmerkungen --")
 st.divider(width="stretch")
 st.subheader('Einfach in der Sidebar (links) produktspezifische Merkamale eingeben ...')
 st.subheader('... und Re-Wind Diagramme anzeigen lassen')
@@ -1146,8 +1147,15 @@ def create_pdf(product_name):
     c.setFont("Helvetica-Bold", 14)
     c.drawString(2 * cm, height - 18 * cm, "Gesamtergebnis in den drei Dimensionen")
 
+    if okolog_fenster_high == None: okolog_fenster_high_ = 100
+    else: okolog_fenster_high_ = okolog_fenster_high
+    if kunde_fenster_high == None: kunde_fenster_high_ = 100
+    else: kunde_fenster_high_ = kunde_fenster_high
+    if okonom_fenster_high == None: okonom_fenster_high_ =100
+    else: okonom_fenster_high_ = okonom_fenster_high
+
     ges_fenster_low = max(okolog_fenster_low,kunde_fenster_low, okonom_fenster_low)
-    ges_fenster_high = min(okolog_fenster_high, kunde_fenster_high, okonom_fenster_high)
+    ges_fenster_high = min(okolog_fenster_high_, kunde_fenster_high_, okonom_fenster_high_)
     min_sweetspot = min(okolog_sweetspot, kunde_sweetspot, okonom_sweetspot)
     max_sweetspot = max(okolog_sweetspot, kunde_sweetspot, okonom_sweetspot)
 
