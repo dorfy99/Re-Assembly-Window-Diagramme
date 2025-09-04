@@ -13,8 +13,6 @@ from reportlab.lib.utils import ImageReader
 from reportlab.platypus import Table, TableStyle
 from reportlab.lib import colors
 import io
-import kaleido
-
 
 
 #### Sidebar mit Datenaufnahme 
@@ -1193,8 +1191,9 @@ def create_pdf(product_name):
 
     # Diagramme zu Bild konvertirern
     def plotly_zu_image (fig, width=2000, heigt=800):
-        img_bytes = fig.to_image(format="png", width=width, height=height, scale=1)
-        buf = io.BytesIO(img_bytes)
+        buf = io.BytesIO()
+        fig.write_image(buf, format="png", width=width, height=height)
+        buf.seek(0)
         return buf
     
     # Diagramme (als Bild) anzeigen
