@@ -15,7 +15,7 @@ from reportlab.lib import colors
 import io
 import kaleido
 
-kaleido.get_chrome_sync()
+
 
 #### Sidebar mit Datenaufnahme 
 
@@ -1193,9 +1193,8 @@ def create_pdf(product_name):
 
     # Diagramme zu Bild konvertirern
     def plotly_zu_image (fig, width=2000, heigt=800):
-        buf = io.BytesIO()
-        fig.write_image(buf, format="png", width=width, height=height)
-        buf.seek(0)
+        img_bytes = fig.to_image(format="png", width=width, height=height, scale=1)
+        buf = io.BytesIO(img_bytes)
         return buf
     
     # Diagramme (als Bild) anzeigen
