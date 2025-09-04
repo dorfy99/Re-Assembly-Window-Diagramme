@@ -20,7 +20,7 @@ import io
 
 with st.sidebar:
 
-       
+    
     st.subheader('Hier einfach produktspezifische Merkamale eingeben ...')
 
     # Erstellen von 9 individuellen Slidern mit Titeln und ausklappbaren Abschnitten
@@ -32,7 +32,7 @@ with st.sidebar:
             FußabdruckSteigung = st.slider('Steigung des Fußabdrucks von einer kleinen Re-Assembly zur nächsten  [%-punkte]', min_value=0, max_value=50, value=10, format="%d %%")
             FußabdruckZweite = st.slider('Fußabdruck der 1. großen Re-Assembly bezogen auf den, einer Neuproduktion [%]', min_value=0, max_value=100, value=45, format="%d %%")
             FußabdruckZweiteSteigung = st.slider ('Steigung des Fußabdrucks von einer großen Re-Assembly zur nächsten [%-punkte]', min_value=0, max_value=50, value=15, format="%d %%")
-            FußabdruckNutzung = st.number_input('Fußabdruck in der Nutzung bezogen auf den Fußabdruck einer Neuproduktion [%]', min_value=0, value=100)
+            FußabdruckNutzung = st.number_input('Fußabdruck in der Nutzung bezogen auf den Fußabdruck einer Neuproduktion [%]', min_value=0, value=80)
             FußabdruckNutzungVerb = st.slider('Grad der vorzeitigen Effizienzsteigerung durch Re-Assembly  [0 = nicht vorhanden - 10 = sehr stark]', min_value=0, max_value=10, value=5)
         
     with st.expander("**Ökonomie spezifische Merkmale**"):
@@ -87,13 +87,14 @@ for okolog_i in range(1, 21):
 # Initialisierung der x- und y-Werte für die zweite Kurve mit Skalierung durch Anz_ReAss
 okologRe_x_values = []
 okologRe_y_values = []
+okolog_100prozent = False
 
 # Startpunkt bei (0, 0)
 okologRe_x_values.append(0)
 okologRe_y_values.append(0)
 
-# Der erste Sprung auf 100
-okologRe_y_temp = 100  
+# Der erste Sprung auf 101, damit de linke Fensterrand mit Vorzeichenwechsel-Kriterium sicher gefunden wird 1 Höher als lineare Kurve
+okologRe_y_temp = 101  
 okologRe_x_values.append(0)
 okologRe_y_values.append(okologRe_y_temp)
 
@@ -103,23 +104,27 @@ for okologRe_i in range(1, int(20*Anz_ReAss) + 1):
     if (okologRe_i-1) % Anz_ReAss == 0: # Re-Assemblys, die mit einer Neuproduktion zusammenfallen sollen keine vorzeitige Verbesserung haben
         okologRe_y_temp += 100 * FußabdruckNutzung /100 /Anz_ReAss - 1 #-1 damit marker für Sweetspot an rechten rand des Bereichs rutscht, in dem der Vorteil konstant ist/wäre
     else:
-        okologRe_y_temp += 100 * FußabdruckNutzung /100 /Anz_ReAss * (1-(FußabdruckNutzungVerb / 10))
+        okologRe_y_temp += 100 * FußabdruckNutzung /100 /Anz_ReAss * (1-(FußabdruckNutzungVerb / 25))
     
     okologRe_x_values.append(okologRe_i/Anz_ReAss)
     okologRe_y_values.append(okologRe_y_temp)
+    okologRe_y_temp2 = okologRe_y_temp
 
     if okologRe_i % 2 != 0 :
-        okologRe_y_temp += 100 * (FußabdruckErste + FußabdruckSteigung * (okologRe_i-1)) / 100
+        okologRe_y_temp += 100 * (FußabdruckErste + FußabdruckSteigung * (okologRe_i-1)/2) / 100
         okologRe_x_values.append(okologRe_i/Anz_ReAss)
         okologRe_y_values.append(okologRe_y_temp)
         #großer Sprung durch Re-Assembly    
     
     else: 
-        okologRe_y_temp +=100* (FußabdruckZweite+FußabdruckZweiteSteigung*pow(2,((okologRe_i-2)/10))*((okologRe_i-2)/2))/100
+        okologRe_y_temp +=100* (FußabdruckZweite+FußabdruckZweiteSteigung*((okologRe_i-2)/2))/100
         okologRe_x_values.append(okologRe_i/Anz_ReAss) 
         okologRe_y_values.append(okologRe_y_temp) 
-
-
+        
+        # Prüfen ob 100% Aufwand (Fußabdruckzuwachs) bei Re-Assembly überschritten werden
+    if okologRe_y_temp - okologRe_y_temp2 >=100 and okolog_100prozent == False : 
+        okolog_100prozent = okologRe_i
+        
 
 ## Berechnung von Sweetspot und Fenster-Grenzen Ökologie
 
@@ -173,6 +178,7 @@ for i in range(1, len(df_interpolated)):
             okolog_max_pos_to_neg_x = df_interpolated['x'].iloc[i]
 
 
+
 # Fenstergrenzen berechnen
 if okolog_min_neg_to_pos_x is None:
     okolog_fenster_low = 1
@@ -181,8 +187,9 @@ else:
     okolog_fenster_low = int(okolog_min_neg_to_pos_x * Anz_ReAss)
 
 if okolog_max_pos_to_neg_x is None:
-    okolog_fenster_high = "unendlich"
-    okolog_max_pos_to_neg_x = 10
+    okolog_fenster_high = None
+    okolog_max_pos_to_neg_x = 19
+    okolog_sweetspot = False
 else:
     okolog_fenster_high = int(okolog_max_pos_to_neg_x * Anz_ReAss -1)
 
@@ -208,8 +215,8 @@ okologRe_neustart_y_values = [y + okolog_neustart_y_value for y in okologRe_y_va
 kunde_x_values = []
 kunde_y_values = []
 
-# Startpunkt bei (0, 100)
-Kunde_y_temp = 100
+# Startpunkt bei (0, 40)
+Kunde_y_temp = 40
 kunde_x_values.append(0)
 kunde_y_values.append(Kunde_y_temp)
 
@@ -244,8 +251,8 @@ kunde_df = pd.DataFrame(kunde_data)
 window_size = int(len(kunde_df) / len(np.unique(kunde_df["Kunde_X_Werte"]))) * 50 
 floating_average_asymmetric = (
     pd.Series(kunde_df["Kunde_Y-Werte"])
-      .rolling(window=window_size, min_periods=1)
-      .mean()
+    .rolling(window=window_size, min_periods=1)
+    .mean()
 )
 
 ### Kundennutzen Re-Assembly
@@ -254,8 +261,8 @@ floating_average_asymmetric = (
 kundeRe_x_values = []
 kundeRe_y_values = []
 
-# Startpunkt bei (0, 100) für die ReAss Kurve
-KundeRe_y_temp = 100
+# Startpunkt bei (0, 40) für die ReAss Kurve
+KundeRe_y_temp = 40
 kundeRe_x_values.append(0)
 kundeRe_y_values.append(KundeRe_y_temp)
 
@@ -274,7 +281,7 @@ for kundeRe_i in range(1, int(20 * Anz_ReAss + 1)):
     
     # Sprung um ... bei Neuproduktion - Innovationsrückgang in Klammer berücksichtigt
     if kundeRe_i < int(20 * Anz_ReAss):
-        KundeRe_y_temp += (60/Anz_ReAss - ((Innovation/5) * (1 + ((kundeRe_i)/50))))
+        KundeRe_y_temp += (60/Anz_ReAss - 1.1*((Innovation * 25) * (((kundeRe_i)/150))))
         kundeRe_x_values.append(kundeRe_i)
         kundeRe_y_values.append(KundeRe_y_temp)
 
@@ -294,15 +301,15 @@ kunde_re_df = pd.DataFrame(kunde_re_data)
 window_size = int(len(kunde_re_df) / len(np.unique(kunde_re_df["KundeRe_X_Werte"]))) * 50
 floating_average_Re_asymmetric = (
     pd.Series(kunde_re_df["KundeRe_Y_Werte"])
-      .rolling(window=window_size, min_periods=1)
-      .mean()
+    .rolling(window=window_size, min_periods=1)
+    .mean()
 )
 
 
 ## Korridor des Kundennutzen definieren
 kunde_korridor_x = np.arange(0, 21, 1)
-kunde_korridor_oben = 100 + 10 * kunde_korridor_x 
-kunde_korridor_unten = 65 + 10 * kunde_korridor_x 
+kunde_korridor_oben = 40 + 10 * kunde_korridor_x 
+kunde_korridor_unten = 5 + 10 * kunde_korridor_x 
 
 
 ## Kundennutzen Sweetspot berechnen
@@ -321,13 +328,13 @@ for idx in kunde_diff_indices:
 
 
 kunde_schnittpunkt_sweetspot = max(kunde_schnittpunkte)
-kunde_sweetspot = int(kunde_schnittpunkt_sweetspot*Anz_ReAss) - 1
+kunde_sweetspot = int(kunde_schnittpunkt_sweetspot*Anz_ReAss)
 
 ## Kundennutzen Fenster Berechnen
 kunde_fenster_low = 1
 
 
-kunde_korridor_unten_df = 65 + (10 * (np.array(scaled_kundeRe_x_values)))
+kunde_korridor_unten_df = 5 + (10 * (np.array(scaled_kundeRe_x_values)))
 
 diff = np.array(kundeRe_y_values) - kunde_korridor_unten_df
 kunde_ReUndKorridor_indices = np.where(np.diff(np.sign(diff)))[0]
@@ -344,16 +351,22 @@ for idx in kunde_ReUndKorridor_indices:
 if kunde_ReUndKorridor_Schnittpunkte:
     kunde_fenster_schnitt_high = min (kunde_ReUndKorridor_Schnittpunkte)  
     kunde_fenster_high  = int (kunde_fenster_schnitt_high)
-else: kunde_fenster_high="fehler"
+else: 
+    kunde_fenster_high= False
+    kunde_fenster_schnitt_high = 20*Anz_ReAss
+
 
 # Verlauf bei Neustart am Re-wind Punkt Liniendiagramm Werte
 kundeRe_neustart_x_values = [x + ((kunde_sweetspot + 1)/Anz_ReAss) for x in scaled_kundeRe_x_values]
-kunde_neustart_y_value =  100 + 10 *  ((kunde_sweetspot + 1)/Anz_ReAss) # Punkt von obere Korridor Grenze
-kundeRe_neustart_y_values = [y + kunde_neustart_y_value - 100 for y in kundeRe_y_values] #-100 weil bei x=0 bei 100 startet
+kunde_neustart_y_value =  40 + 10 *  ((kunde_sweetspot + 1)/Anz_ReAss) # Punkt von obere Korridor Grenze
+kundeRe_neustart_y_values = [y + kunde_neustart_y_value - 40 for y in kundeRe_y_values] #-100 weil bei x=0 bei 100 startet
 
 
 # Y-Ausdehnung ermitteln
-kunde_xWindow_max_y_value = 100 + 10 * (kunde_fenster_high/Anz_ReAss +1)  
+if kunde_fenster_high == False:
+    kunde_xWindow_max_y_value = 250
+else:
+    kunde_xWindow_max_y_value = 40 + 10 * (kunde_fenster_high/Anz_ReAss +1)  
 
 
 
@@ -391,6 +404,7 @@ for okonomRe_i in range(1, 21):
 # Initialisierung der x- und y-Werte für die zweite Kurve mit Skalierung durch Anz_ReAss
 okonomRe_x_values = []
 okonomRe_y_values = []
+okonom_100prozent = False
 
 # Startpunkt bei (0, 0)
 okonomRe_x_values.append(0)
@@ -406,6 +420,8 @@ for okonomRe_i in range(1, int(20*Anz_ReAss) + 1):
     okonomRe_x_values.append(okonomRe_i/Anz_ReAss)
     okonomRe_y_values.append(okonomRe_y_temp)
 
+    okonomRe_y_temp2 = okonomRe_y_temp
+    
     #kleiner Sprung durch Re-Assembly
     if okonomRe_i % 2 != 0:
         okonomRe_y_temp -=100* (KostenErste+KostenSteigung*((okonomRe_i-1)/2))/100
@@ -417,6 +433,10 @@ for okonomRe_i in range(1, int(20*Anz_ReAss) + 1):
         okonomRe_y_temp -=100* (KostenZweite+KostenZweiteSteigung * ((okonomRe_i-2)/2))/100
         okonomRe_x_values.append(okonomRe_i/Anz_ReAss) 
         okonomRe_y_values.append(okonomRe_y_temp) 
+
+    if okonomRe_y_temp2 - okonomRe_y_temp >= 100 and okonom_100prozent == False: 
+        okonom_100prozent = okonomRe_i
+
 
 
 ## Fenster und Sweetspot Ökonomie
@@ -470,11 +490,15 @@ for i in range(1, len(df_interpolated)):
 
 
 # Fenstergrenzen berechnen
-okonom_fenster_low = int(okonom_min_neg_to_pos_x * Anz_ReAss)
+if okonom_min_neg_to_pos_x == None:
+    okonom_fenster_low = None
+else:  
+    okonom_fenster_low = int(okonom_min_neg_to_pos_x * Anz_ReAss)
 
-if okonom_max_pos_to_neg_x is None:
-    okonom_fenster_high = "unendlich"
-    okonom_max_pos_to_neg_x = 10
+if okonom_max_pos_to_neg_x == None or okonom_max_pos_to_neg_x < 2:
+    okonom_fenster_high = None
+    okonom_max_pos_to_neg_x = 20
+
 else:
     okonom_fenster_high = int(okonom_max_pos_to_neg_x * Anz_ReAss -1)
 
@@ -525,16 +549,6 @@ with st.expander("**Ökologie Diagramm**"):
 
     if okolog_min_neg_to_pos_x != None: #Abfrage ob Fenster vorhanden
 
-        # Hinzufügen der Re-Assembly kurve nach dem Re-Wind Punkt
-        fig_okolog_plotly.add_trace(go.Scatter(
-            x=okologRe_neustart_x_values,
-            y=okologRe_neustart_y_values,
-            mode="lines",
-            name="Re-Assembly Produkt: Zweiter Kreislauf",
-            line=dict(dash='dot', color='lightgreen')
-        ))
-
-
         # Fenster Bereich plotten
         fig_okolog_plotly.add_shape(type="rect",
                     x0=okolog_min_neg_to_pos_x, x1=okolog_max_pos_to_neg_x,
@@ -562,25 +576,36 @@ with st.expander("**Ökologie Diagramm**"):
             font=dict(size=15),
         )
 
-        # Sweetspot Indikator plotten
+        # Sweetspot Indikator und Neustartkurve plotten
+        if okolog_sweetspot != False:
             # Werte für Sweetspot indikator linie
-        okolog_sweetspot_marker_x_values = [okolog_sweetspot/Anz_ReAss, okolog_diff_max, okolog_diff_max]
-        okolog_sweetspot_marker_y_values = [0, 100, okolog_xWindow_max_y_value]
-        fig_okolog_plotly.add_trace(go.Scatter(
-            x=okolog_sweetspot_marker_x_values,
-            y=okolog_sweetspot_marker_y_values,
-            mode='lines',
-            line=dict(color="red", width=2),
-            showlegend=False))
+            okolog_sweetspot_marker_x_values = [okolog_sweetspot/Anz_ReAss, okolog_diff_max, okolog_diff_max]
+            okolog_sweetspot_marker_y_values = [0, 100, okolog_xWindow_max_y_value]
+            fig_okolog_plotly.add_trace(go.Scatter(
+                x=okolog_sweetspot_marker_x_values,
+                y=okolog_sweetspot_marker_y_values,
+                mode='lines',
+                line=dict(color="red", width=2),
+                showlegend=False))
         
-        # Füge ein Icon hinzu zum Neustartzeitpunkt
-        fig_okolog_plotly.add_annotation(
-            x=okolog_diff_max,
-            y=okolog_xWindow_max_y_value,
-            text="🔄",
-            showarrow=False,
-            font=dict(size=20),
-        )
+            # Füge ein Icon hinzu zum Neustartzeitpunkt
+            fig_okolog_plotly.add_annotation(
+                x=okolog_diff_max,
+                y=okolog_xWindow_max_y_value,
+                text="🔄",
+                showarrow=False,
+                font=dict(size=20),
+            )
+
+            # Hinzufügen der Re-Assembly kurve nach dem Re-Wind Punkt
+            fig_okolog_plotly.add_trace(go.Scatter(
+            x=okologRe_neustart_x_values,
+            y=okologRe_neustart_y_values,
+            mode="lines",
+            name="Re-Assembly Produkt: Zweiter Kreislauf",
+            line=dict(dash='dot', color='lightgreen')
+            ))
+
 
 
     #Zweite X-Achse für Re-Assembly Zählung mit leerem Datensatz initialisieren
@@ -589,13 +614,13 @@ with st.expander("**Ökologie Diagramm**"):
         x= okolog_x_values_Re,
         y=[],
         xaxis='x2',
-          
+        
     ))
-   
+
     
     fig_okolog_plotly.update_layout(
-        xaxis=dict(title=dict(text='Lineare Lebenszyklen',font=dict(color="darkblue")), side='bottom', tickmode='linear', dtick=1, tickfont=dict(color='darkblue'), position=0.05, range=[-0.01, int(okolog_max_pos_to_neg_x)+1.01]),
-        xaxis2=dict(title=dict(text="Re-Assemblys",font=dict(color="lightgreen")), side='bottom', tickmode='linear', dtick=1, tickfont=dict(color='lightgreen'), overlaying='x', position=0, range=[-0.01, (int(okolog_max_pos_to_neg_x)+1.01)*Anz_ReAss]),
+        xaxis=dict(title=dict(text='Lineare Lebenszyklen',font=dict(color="darkblue")), side='bottom', tickmode='linear', dtick=1, tickfont=dict(color='darkblue'), position=0, range=[-0.01, int(okolog_max_pos_to_neg_x)+1.01]),
+        xaxis2=dict(title=dict(text="Re-Assemblys",font=dict(color="lightgreen")), side='bottom', tickmode='linear', dtick=1, tickfont=dict(color='lightgreen'), overlaying='x', position=0.06, range=[-0.01, (int(okolog_max_pos_to_neg_x)+1.01)*Anz_ReAss]),
         yaxis=dict(title='Kumulierter ökologischer Fußabdruck', showticklabels=False, range=[-100, okolog_xWindow_max_y_value*1.2]),
         legend=dict(x=0, y=1, xanchor='left', yanchor='bottom', bgcolor='rgba(0,0,0,0)'),
         )
@@ -623,6 +648,14 @@ with st.expander("**Ökologie Diagramm**"):
             """, unsafe_allow_html=True)
         
     else: # Anzeige wenn Fenster vorhanden
+        if okolog_100prozent != False and (okolog_fenster_high == None or okolog_100prozent < okolog_fenster_high):
+            st.markdown(f"""
+            <div style="text-align: center; white-space: nowrap;">
+            <strong> Achtung Fußabdruck übersteigt bei der {okolog_100prozent}. Re-Assembly den einer Neuproduktion</strong><br><br>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        
         with col1:
             st.markdown(f"""
                 <div style="text-align: center; white-space: nowrap;">
@@ -633,6 +666,7 @@ with st.expander("**Ökologie Diagramm**"):
                 </div>
             """, unsafe_allow_html=True)
 
+        
         with col2:
             st.markdown(f"""
                 <div style="text-align: center; white-space: nowrap;">
@@ -681,13 +715,13 @@ with st.expander("**Ökonomie Diagramm**"):
         x= okonom_x_values_Re,
         y=[],
         xaxis='x2',
-          
+        
     ))
-   
+
     
     fig_okonom_plotly.update_layout(
-        xaxis=dict(title=dict(text='Lineare Lebenszyklen',font=dict(color="darkblue")), side='bottom', tickmode='linear', dtick=1, tickfont=dict(color='darkblue'), position=0.05, range=[-0.01, int(okonom_max_pos_to_neg_x)+1.01]),
-        xaxis2=dict(title=dict(text="Re-Assemblys",font=dict(color="lightgreen")), side='bottom', tickmode='linear', dtick=1, tickfont=dict(color='lightgreen'), overlaying='x', position=0, range=[-0.01, (int(okonom_max_pos_to_neg_x)+1.01)*Anz_ReAss]),
+        xaxis=dict(title=dict(text='Lineare Lebenszyklen',font=dict(color="darkblue")), side='bottom', tickmode='linear', dtick=1, tickfont=dict(color='darkblue'), position=0, range=[-0.01, int(okonom_max_pos_to_neg_x)+1.01]),
+        xaxis2=dict(title=dict(text="Re-Assemblys",font=dict(color="lightgreen")), side='bottom', tickmode='linear', dtick=1, tickfont=dict(color='lightgreen'), overlaying='x', position=0.06, range=[-0.01, (int(okonom_max_pos_to_neg_x)+1.01)*Anz_ReAss]),
         yaxis=dict(title='Kumulierter ökologischer Fußabdruck', showticklabels=False, range=[-100-okonom_xWindow_max_y_value*0.1, okonom_xWindow_max_y_value*1.2]),
         legend=dict(x=0, y=1, xanchor='left', yanchor='bottom', bgcolor='rgba(0,0,0,0)'),
         )
@@ -705,7 +739,7 @@ with st.expander("**Ökonomie Diagramm**"):
         # Fenster Bereich plotten
         fig_okonom_plotly.add_shape(type="rect",
             x0=okonom_min_neg_to_pos_x, x1=okonom_max_pos_to_neg_x,
-            y0=0,
+            y0=-100,
             y1=okonom_xWindow_max_y_value,
             fillcolor="orange",
             opacity=0.1,
@@ -732,7 +766,7 @@ with st.expander("**Ökonomie Diagramm**"):
 
         # Sweetspot Indikator plotten
         okonom_sweetspot_marker_x_values = [okonom_sweetspot/Anz_ReAss, okonom_diff_max, okonom_diff_max]
-        okonom_sweetspot_marker_y_values = [0, 100, okonom_xWindow_max_y_value]
+        okonom_sweetspot_marker_y_values = [-100, (okonom_xWindow_max_y_value)*0.1-100, okonom_xWindow_max_y_value]
         fig_okonom_plotly.add_trace(go.Scatter(
             x=okonom_sweetspot_marker_x_values,
             y=okonom_sweetspot_marker_y_values,
@@ -762,6 +796,13 @@ with st.expander("**Ökonomie Diagramm**"):
     
     else: #Anzeige falls Fenster vorhanden
 
+        if okonom_100prozent != False and (okonom_fenster_high == None or okonom_100prozent < okonom_fenster_high):
+            st.markdown(f"""
+            <div style="text-align: center; white-space: nowrap;">
+            <strong> Achtung Kosten übersteigen bei der {okonom_100prozent}. Re-Assembly die einer Neuproduktion</strong><br><br>
+            </div>
+            """, unsafe_allow_html=True)
+
         with col1:
             st.markdown(f"""
                 <div style="text-align: center; white-space: nowrap;">
@@ -782,6 +823,7 @@ with st.expander("**Ökonomie Diagramm**"):
                 </div>
             """, unsafe_allow_html=True)
 
+        if okonom_fenster_high == None: okonom_fenster_high = "Out of Scope"
         with col3:
             st.markdown(f"""
                 <div style="text-align: center; white-space: nowrap;">
@@ -795,7 +837,7 @@ with st.expander("**Ökonomie Diagramm**"):
 
 ## Diagramm anzeigen Kundennutzen
 with st.expander("**Kundennutzen Diagramm**"):
-   
+
     fig_kunde_plotly = go.Figure()
 
     # Lineares Produkt
@@ -844,62 +886,64 @@ with st.expander("**Kundennutzen Diagramm**"):
         showlegend=False,
     ))
 
-    
-    # Hinzufügen der Re-Assembly kurve nach dem Re-Wind Punkt
-    fig_kunde_plotly.add_trace(go.Scatter(
-        x=kundeRe_neustart_x_values,
-        y=kundeRe_neustart_y_values,
-        mode="lines",
-        name="Re-Assembly Produkt: Zweiter Kreislauf",
-        line=dict(dash='dot', color='lightgreen')
-    ))
+    if Anz_ReAss != 1 and Innovation != 0: #Abfrage ob Kundennutzen Vorteilhaft sein kann
+        
 
-    # Fenster Bereich plotten
-    fig_kunde_plotly.add_shape(type="rect",
-                x0=0.5, x1= (kunde_fenster_schnitt_high/Anz_ReAss),
-                y0=0, y1=kunde_xWindow_max_y_value,
-                fillcolor="orange",
-                opacity=0.1,
-                layer="below",
-                line_width=0)
-    
-    # Füge ein Icon zur linken Grenze hinzu
-    fig_kunde_plotly.add_annotation(
-        x=0.5,
-        y=kunde_xWindow_max_y_value*0.4,
-        text="➡️",
-        showarrow=False,
-        font=dict(size=15),
-    )
+        # Hinzufügen der Re-Assembly kurve nach dem Re-Wind Punkt
+        fig_kunde_plotly.add_trace(go.Scatter(
+            x=kundeRe_neustart_x_values,
+            y=kundeRe_neustart_y_values,
+            mode="lines",
+            name="Re-Assembly Produkt: Zweiter Kreislauf",
+            line=dict(dash='dot', color='lightgreen')
+        ))
 
-    # Füge ein Icon zur rechten Grenze hinzu
-    fig_kunde_plotly.add_annotation(
-        x=(kunde_fenster_schnitt_high/Anz_ReAss),
-        y=kunde_xWindow_max_y_value*0.4,
-        text="⬅️",
-        showarrow=False,
-        font=dict(size=15),
-    )
+        # Fenster Bereich plotten
+        fig_kunde_plotly.add_shape(type="rect",
+                    x0=0.5, x1= (kunde_fenster_schnitt_high/Anz_ReAss),
+                    y0=0, y1=kunde_xWindow_max_y_value,
+                    fillcolor="orange",
+                    opacity=0.1,
+                    layer="below",
+                    line_width=0)
+        
+        # Füge ein Icon zur linken Grenze hinzu
+        fig_kunde_plotly.add_annotation(
+            x=0.5,
+            y=kunde_xWindow_max_y_value*0.4,
+            text="➡️",
+            showarrow=False,
+            font=dict(size=15),
+        )
 
-    # Sweetspot Indikator plotten
-        # Werte für Sweetspot indikator linie
-    kunde_sweetspot_marker_x_values = [kunde_sweetspot/Anz_ReAss, kunde_schnittpunkt_sweetspot, kunde_schnittpunkt_sweetspot]
-    kunde_sweetspot_marker_y_values = [0, 20, kunde_xWindow_max_y_value]
-    fig_kunde_plotly.add_trace(go.Scatter(
-        x=kunde_sweetspot_marker_x_values,
-        y=kunde_sweetspot_marker_y_values,
-        mode='lines',
-        line=dict(color="red", width=2),
-        showlegend=False))
-    
-    # Füge ein Icon hinzu zum Neustartzeitpunkt
-    fig_kunde_plotly.add_annotation(
-        x=kunde_schnittpunkt_sweetspot,
-        y=kunde_xWindow_max_y_value,
-        text="🔄",
-        showarrow=False,
-        font=dict(size=20),
-    )
+        # Füge ein Icon zur rechten Grenze hinzu
+        fig_kunde_plotly.add_annotation(
+            x=(kunde_fenster_schnitt_high/Anz_ReAss),
+            y=kunde_xWindow_max_y_value*0.4,
+            text="⬅️",
+            showarrow=False,
+            font=dict(size=15),
+        )
+
+        # Sweetspot Indikator plotten
+            # Werte für Sweetspot indikator linie
+        kunde_sweetspot_marker_x_values = [kunde_sweetspot/Anz_ReAss, kunde_schnittpunkt_sweetspot, kunde_schnittpunkt_sweetspot]
+        kunde_sweetspot_marker_y_values = [0, 20, kunde_xWindow_max_y_value]
+        fig_kunde_plotly.add_trace(go.Scatter(
+            x=kunde_sweetspot_marker_x_values,
+            y=kunde_sweetspot_marker_y_values,
+            mode='lines',
+            line=dict(color="red", width=2),
+            showlegend=False))
+        
+        # Füge ein Icon hinzu zum Neustartzeitpunkt
+        fig_kunde_plotly.add_annotation(
+            x=kunde_schnittpunkt_sweetspot,
+            y=kunde_xWindow_max_y_value,
+            text="🔄",
+            showarrow=False,
+            font=dict(size=20),
+        )
 
     
     #Zweite X-Achse für Re-Assembly Zählung mit leerem Datensatz initialisieren
@@ -908,13 +952,13 @@ with st.expander("**Kundennutzen Diagramm**"):
         x= kunde_x_values_Re,
         y=[],
         xaxis='x2',
-          
+        
     ))
-   
-     
+
+    
     fig_kunde_plotly.update_layout(
-        xaxis=dict(title=dict(text='Lineare Lebenszyklen',font=dict(color="darkblue")), side='bottom', tickmode='linear', dtick=1, range=[-0.01, int(kunde_fenster_schnitt_high)/Anz_ReAss +2.1], tickfont=dict(color='darkblue'), position=0.06),
-        xaxis2=dict(title=dict(text="Re-Assemblys",font=dict(color="lightgreen")), overlaying='x', side='bottom', layer="above traces", tickmode='linear', dtick=1, range=[-0.01, int(kunde_fenster_schnitt_high) +2.1*Anz_ReAss], tickfont=dict(color='lightgreen'), position=0),
+        xaxis=dict(title=dict(text='Lineare Lebenszyklen',font=dict(color="darkblue")), side='bottom', tickmode='linear', dtick=1, range=[-0.01, int(kunde_fenster_schnitt_high)/Anz_ReAss +2.1], tickfont=dict(color='darkblue'), position=0),
+        xaxis2=dict(title=dict(text="Re-Assemblys",font=dict(color="lightgreen")), overlaying='x', side='bottom', layer="above traces", tickmode='linear', dtick=1, range=[-0.01, int(kunde_fenster_schnitt_high) +2.1*Anz_ReAss], tickfont=dict(color='lightgreen'), position=0.06),
         yaxis=dict(title='Kundennutzen', showticklabels=False, range=[-kunde_xWindow_max_y_value*0.1, kunde_xWindow_max_y_value*1.2]),
         legend=dict(x=0, y=1, xanchor='left', yanchor='bottom', bgcolor='rgba(0,0,0,0)'),
     )
@@ -923,43 +967,59 @@ with st.expander("**Kundennutzen Diagramm**"):
     st.plotly_chart(fig_kunde_plotly)
 
 # Fenster und Sweetspot anzeigen Kundennutzen
-    col1, col2, col3 = st.columns(3)
-    if 1 == None: #Anzeige falls kein Fenster vorhanden
+    if Anz_ReAss == 1: #Anzeige Kundennutzen nicht vorteilhaft
         st.markdown(f"""
-                <div style="text-align: center; white-space: nowrap;">
-                    <strong> Kein ReAssembly Fenster vorhanden</strong><br><br>
+            <div style="text-align: center; white-space: nowrap;">
+            <strong> Dieser Re-Assembly Zyklus führt nicht zu einer Verbesserung des Kundennutzens</strong><br><br>
+            </div>
+            """, unsafe_allow_html=True)
+        
+    elif Innovation == 0:
+        st.markdown(f"""
+            <div style="text-align: center; white-space: nowrap;">
+            <strong> Dies wäre ein optimales (utopisches) Produkt, welches den Kundennutzen enorm steigert</strong><br><br>
+            </div>
+            """, unsafe_allow_html=True)
+    
+    else: #Anzeige falls Fenster vorhanden
+    
+        col1, col2, col3 = st.columns(3)
+        if 1 == None: #Anzeige falls kein Fenster vorhanden
+            st.markdown(f"""
+                    <div style="text-align: center; white-space: nowrap;">
+                        <strong> Kein ReAssembly Fenster vorhanden</strong><br><br>
+                        </div>
+                """, unsafe_allow_html=True)
+        else:
+            with col1:
+                st.markdown(f"""
+                    <div style="text-align: center; white-space: nowrap;">
+                        <strong>➡️ Untere Fenstergrenze</strong><br>
+                        <span style="font-size: 24px;">≥</span> 
+                        <span style="font-size: 24px;">{kunde_fenster_low}</span>
+                        <span style="font-size: 14px;">Re-Assemblys</span>
                     </div>
-            """, unsafe_allow_html=True)
-    else:
-        with col1:
-            st.markdown(f"""
-                <div style="text-align: center; white-space: nowrap;">
-                    <strong>➡️ Untere Fenstergrenze</strong><br>
-                    <span style="font-size: 24px;">≥</span> 
-                    <span style="font-size: 24px;">{kunde_fenster_low}</span>
-                    <span style="font-size: 14px;">Re-Assemblys</span>
-                </div>
-            """, unsafe_allow_html=True)
+                """, unsafe_allow_html=True)
 
-        with col2:
-            st.markdown(f"""
-                <div style="text-align: center; white-space: nowrap;">
-                    <strong>🔄 Re-Wind Punkt</strong><br>
-                    <span style="font-size: 14px;">nach</span>
-                    <span style="font-size: 24px;">{kunde_sweetspot}</span>
-                    <span style="font-size: 14px;">Re-Assemblys</span>
-                </div>
-            """, unsafe_allow_html=True)
+            with col2:
+                st.markdown(f"""
+                    <div style="text-align: center; white-space: nowrap;">
+                        <strong>🔄 Re-Wind Punkt</strong><br>
+                        <span style="font-size: 14px;">nach</span>
+                        <span style="font-size: 24px;">{kunde_sweetspot}</span>
+                        <span style="font-size: 14px;">Re-Assemblys</span>
+                    </div>
+                """, unsafe_allow_html=True)
 
-        with col3:
-            st.markdown(f"""
-                <div style="text-align: center; white-space: nowrap;">
-                    <strong>⬅️ Obere Fenstergrenze</strong><br>
-                    <span style="font-size: 24px;">≤</span>
-                    <span style="font-size: 24px;">{kunde_fenster_high}</span>
-                    <span style="font-size: 14px;">Re-Assemblys</span>
-                </div>
-            """, unsafe_allow_html=True)
+            with col3:
+                st.markdown(f"""
+                    <div style="text-align: center; white-space: nowrap;">
+                        <strong>⬅️ Obere Fenstergrenze</strong><br>
+                        <span style="font-size: 24px;">≤</span>
+                        <span style="font-size: 24px;">{kunde_fenster_high}</span>
+                        <span style="font-size: 14px;">Re-Assemblys</span>
+                    </div>
+                """, unsafe_allow_html=True)
 
 
 
@@ -1008,7 +1068,7 @@ def create_pdf(product_name):
     c.setFont("Helvetica-Bold", 14)
     c.drawString(2 * cm, height - 5 * cm, "Annahmen zu den Produkteigenschaften")
 
-   
+
     ## Re-Assembly Zyklus Eigenschaft
     c.setFont("Helvetica-Bold", 10)
     oekolog_Eigenschaften_Benennung = ["Anzahl Re-Assemblys je linearem Lebenszyklus"]  
@@ -1027,14 +1087,14 @@ def create_pdf(product_name):
 
     c.setFont("Helvetica", 10)
     oekolog_Eigenschaften_Benennung = ["Fußabdruck der 1. kleinen Re-Assembly bezogen auf den, einer Neuproduktion", 
-             "Steigung des Fußabdrucks von einer kleinen Re-Assembly zur nächsten",
-             "Fußabdruck der 1. großen Re-Assembly bezogen auf den, einer Neuproduktion",
-             "Steigung des Fußabdrucks von einer großen Re-Assembly zur nächsten",
-             "Fußabdruck der Nutzung bezogen auf den Fußabdruck einer Neuproduktion",  
-             "Grad der vorzeitigen Effizienzsteigerung durch Re-Assembly"]  
+            "Steigung des Fußabdrucks von einer kleinen Re-Assembly zur nächsten",
+            "Fußabdruck der 1. großen Re-Assembly bezogen auf den, einer Neuproduktion",
+            "Steigung des Fußabdrucks von einer großen Re-Assembly zur nächsten",
+            "Fußabdruck der Nutzung bezogen auf den Fußabdruck einer Neuproduktion",  
+            "Grad der vorzeitigen Effizienzsteigerung durch Re-Assembly"]  
     
     oekolog_Eigenschaften_Werte = [f"{FußabdruckErste} %", f"{FußabdruckSteigung} %-punkte", f"{FußabdruckZweite} %", f"{FußabdruckZweiteSteigung} %-punkte", 
-              f"{FußabdruckNutzung} %", f"{FußabdruckNutzungVerb} (0-10)"]  
+            f"{FußabdruckNutzung} %", f"{FußabdruckNutzungVerb} (0-10)"]  
     
     oekolog_Eigenschaften_Tabelle = height - 7.5 * cm
     for term, value in zip(oekolog_Eigenschaften_Benennung, oekolog_Eigenschaften_Werte):
@@ -1042,19 +1102,19 @@ def create_pdf(product_name):
         c.drawString(16 * cm, oekolog_Eigenschaften_Tabelle, value) 
         oekolog_Eigenschaften_Tabelle -= 0.5 * cm
 
-   
+
     # Ökonomische Eigenschaften in Tabelle
     c.setFont("Helvetica-Bold", 10)
     c.drawString(2 * cm, height - 11 * cm, "Ökologie spezifisch")
 
     c.setFont("Helvetica", 10)
     oekonom_Eigenschaften_Benennung = ["Kosten der 1. kleinen Re-Assembly bezogen auf die, einer Neuproduktion", 
-             "Steigung der Kosten von einer kleinen Re-Assembly zur nächsten",
-             "Kosten der 1. großen Re-Assembly bezogen auf die, einer Neuproduktion",
-             "Steigung der Kosten von einer großen Re-Assembly zur nächsten",
-             "Anteil der Herstellungskosten am Verkaufspreis",
-             "Höhe der Subskriptionserlöse in einem linearen Lebenszyklus",
-             "bezogen auf einen linearen Verkaufserlös"]  
+            "Steigung der Kosten von einer kleinen Re-Assembly zur nächsten",
+            "Kosten der 1. großen Re-Assembly bezogen auf die, einer Neuproduktion",
+            "Steigung der Kosten von einer großen Re-Assembly zur nächsten",
+            "Anteil der Herstellungskosten am Verkaufspreis",
+            "Höhe der Subskriptionserlöse in einem linearen Lebenszyklus",
+            "bezogen auf einen linearen Verkaufserlös"]  
     
     oekonom_Eigenschaften_Werte = [f"{KostenErste} %", f"{KostenSteigung} %-punkte", f"{KostenZweite} %", f"{KostenZweiteSteigung} %-punkte", 
             f"{Marge} (0-10)", f"{Subskription} %",""]  
@@ -1066,10 +1126,10 @@ def create_pdf(product_name):
         oekonom_Eigenschaften_Tabelle -= 0.5 * cm
 
 
-     # Kundennutzen Eigenschaften in Tabelle
+    # Kundennutzen Eigenschaften in Tabelle
     c.setFont("Helvetica-Bold", 10)
     c.drawString(2 * cm, height - 15.5 * cm, "Kundennutzen spezifisch")
-   
+
     c.setFont("Helvetica", 10)
     kunde_Eigenschaften_Benennung = ["Grad des Innovationsrückgangs"]
 
@@ -1116,7 +1176,7 @@ def create_pdf(product_name):
     # X- und Y- Position setzen
     table_ergebnisse.drawOn(c, 2*cm, height - 23* cm)
 
-       
+    
     # Seitenumbruch
     c.showPage()
 
@@ -1160,7 +1220,7 @@ def create_pdf(product_name):
         y_cursor -= 1*cm
 
     c.save()  # PDF speichern
-      
+    
     return pdf_file_path
 
 
@@ -1180,7 +1240,7 @@ def product_dialog():
                 with open(pdf_file_path, "rb") as pdf_file:
                     st.download_button("Download PDF", pdf_file, file_name=download_filename, mime='application/pdf')
 
-       
+    
         else:
             st.warning("Bitte geben Sie einen Namen ein.")
 
