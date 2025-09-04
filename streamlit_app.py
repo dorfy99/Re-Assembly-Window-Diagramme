@@ -1192,18 +1192,67 @@ def create_pdf(product_name):
 
     kopfzeile()
 
-    # Diagramme zu Bild konvertirern
-    def plotly_zu_image (fig, width=2000, heigt=800):
-        buf = io.BytesIO()
-        fig.write_image(buf, format="png", width=width, height=height)
-        buf.seek(0)
-        return buf
+    # # Diagramme zu Bild konvertirern
+    # def plotly_zu_image (fig, width=2000, heigt=800):
+    #     buf = io.BytesIO()
+    #     fig.write_image(buf, format="png", width=width, height=height)
+    #     buf.seek(0)
+    #     return buf
     
-    # Diagramme (als Bild) anzeigen
+    # # Diagramme (als Bild) anzeigen
+    # plots = [
+    # ("Ökologie Diagramm", fig_okolog_plotly),
+    # ("Ökonomie Diagramm", fig_okonom_plotly),
+    # ("Kundennutzen Diagramm", fig_kunde_plotly)]
+
+    # y_cursor = height - 3*cm
+
+    # for title, fig in plots:
+    #     # Überschrift linksbündig
+    #     c.setFont("Helvetica-Bold", 16)
+    #     c.drawString(2*cm, y_cursor, title)
+
+    #     # Plot in BytesIO PNG
+    #     img_buf = plotly_zu_image(fig)
+    #     img = ImageReader(img_buf)
+
+    #     # Seitenverhältnis & Größe
+    #     img_height = 7*cm
+    #     img_width = img_height * 2000/800 # siehe Verhältnis Breite/Höhe in bild Erstellung oben
+        
+    #     # Position auf der Seite
+    #     x_pos = (width - img_width)/2
+    #     y_cursor -= img_height + 1*cm  # Platz für Bild + Abstand
+
+    #     c.drawImage(img, x_pos, y_cursor, width=img_width, height=img_height)
+
+    #     # Abstand zwischen Plot und nächster Überschrift
+    #     y_cursor -= 1*cm
+
+    # Diagramme zu SVG konvertieren und als ReportLab Drawing zurückgeben
+    def plotly_zu_svg(fig, width=2000, height=800):
+        buf = io.BytesIO()
+        fig.write_image(buf, format="svg", width=width, height=height)
+        buf.seek(0)
+        svg_text = buf.read().decode("utf-8")  # Bytes → String
+        drawing = svg2rlg(io.StringIO(svg_text))
+
+        # Skalierung auf Zielhöhe ( 5 cm)
+        target_height = 5 * cm
+        scale_factor = target_height / drawing.height
+        drawing.width *= scale_factor
+        drawing.height *= scale_factor
+        for obj in drawing.contents:
+            obj.scale(scale_factor, scale_factor)
+
+        return drawing
+
+    # Diagramme (als SVG) im PDF anzeigen
     plots = [
-    ("Ökologie Diagramm", fig_okolog_plotly),
-    ("Ökonomie Diagramm", fig_okonom_plotly),
-    ("Kundennutzen Diagramm", fig_kunde_plotly)]
+        ("Ökologie Diagramm", fig_okolog_plotly),
+        ("Ökonomie Diagramm", fig_okonom_plotly),
+        ("Kundennutzen Diagramm", fig_kunde_plotly)
+    ]
 
     y_cursor = height - 3*cm
 
@@ -1212,25 +1261,27 @@ def create_pdf(product_name):
         c.setFont("Helvetica-Bold", 16)
         c.drawString(2*cm, y_cursor, title)
 
-        # Plot in BytesIO PNG
-        img_buf = plotly_zu_image(fig)
-        img = ImageReader(img_buf)
+        # Plot als SVG/Drawing
+        drawing = plotly_zu_svg(fig)
 
-        # Seitenverhältnis & Größe
-        img_height = 7*cm
-        img_width = img_height * 2000/800 # siehe Verhältnis Breite/Höhe in bild Erstellung oben
-        
-        # Position auf der Seite
-        x_pos = (width - img_width)/2
-        y_cursor -= img_height + 1*cm  # Platz für Bild + Abstand
+        # # Seitenverhältnis & Größe
+        # img_height = 5*cm
+        # img_width = img_height * 2000 / 800  # Verhältnis Breite/Höhe beibehalten
 
-        c.drawImage(img, x_pos, y_cursor, width=img_width, height=img_height)
+        # # Position auf der Seite
+        # x_pos = (width - img_width)/2
+        # y_cursor -= img_height + 1*cm  # Platz für Bild + Abstand
+
+        x_pos = (width - drawing.width) / 2
+        y_cursor -= drawing.height + 1*cm
+
+        # SVG ins PDF einfügen
+        renderPDF.draw(drawing, c, x_pos, y_cursor)
 
         # Abstand zwischen Plot und nächster Überschrift
         y_cursor -= 1*cm
-
-    c.save()  # PDF speichern
     
+    c.save()
     return pdf_file_path
 
 
