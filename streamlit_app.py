@@ -15,6 +15,8 @@ from reportlab.lib import colors
 import io
 from svglib.svglib import svg2rlg
 from reportlab.graphics import renderPDF
+import matplotlib.patches as patches
+import re
 
 
 
@@ -496,6 +498,8 @@ if okonom_min_neg_to_pos_x == None:
     okonom_fenster_low = None
 else:  
     okonom_fenster_low = int(okonom_min_neg_to_pos_x * Anz_ReAss)
+
+okonom_fenster_low = okonom_fenster_low
 
 if okonom_max_pos_to_neg_x == None or okonom_max_pos_to_neg_x < 2:
     okonom_fenster_high = None
@@ -1149,12 +1153,28 @@ def create_pdf(product_name):
     c.setFont("Helvetica-Bold", 14)
     c.drawString(2 * cm, height - 18 * cm, "Gesamtergebnis in den drei Dimensionen")
 
+
+    # Fehler in max und min Funktion (nachfolgend abfangen)
     if okolog_fenster_high == None: okolog_fenster_high_ = 100
     else: okolog_fenster_high_ = okolog_fenster_high
     if kunde_fenster_high == None: kunde_fenster_high_ = 100
     else: kunde_fenster_high_ = kunde_fenster_high
     if okonom_fenster_high == None: okonom_fenster_high_ =100
     else: okonom_fenster_high_ = okonom_fenster_high
+
+    st.header(okonom_fenster_low)
+
+    if okolog_fenster_low == None: okolog_fenster_low_ = 0
+    else: okolog_fenster_low_ = okolog_fenster_low
+    if kunde_fenster_low == None: kunde_fenster_low_ = 0
+    else: kunde_fenster_low_ = kunde_fenster_low
+    if okonom_fenster_low == None: 
+        okonom_fenster_low = 0
+    else: okonom_fenster_low = okonom_fenster_low
+
+    st.header(f"okolog_fenster_low kunde_fenster_low okonom_fenster_low")
+
+    
 
     ges_fenster_low = max(okolog_fenster_low,kunde_fenster_low, okonom_fenster_low)
     ges_fenster_high = min(okolog_fenster_high_, kunde_fenster_high_, okonom_fenster_high_)
@@ -1281,20 +1301,104 @@ def create_pdf(product_name):
     #     # Abstand zwischen Plot und nächster Überschrift
     #     y_cursor -= 1*cm
 
-    # Plotly → Matplotlib → PNG
-    def plotly_to_matplotlib_png(fig, width=6, height=3):
-        plt.figure(figsize=(width, height))
+    ## Plotly → Matplotlib → PNG
+
+    # Plotly → Matplotlib Dash Mapping
+    dash_mapping = {
+    'solid': 'solid',
+    'dash': 'dashed',
+    'dot': 'dotted',
+    'dashdot': 'dashdot'
+    }
+
+    # Plotly Farbe -> Matplotlib Farbe
+    def plotly_color_to_mpl(color_str):
+        if not color_str:
+            return None
+        if color_str.startswith('rgba'):
+            nums = list(map(float, re.findall(r'[\d.]+', color_str)))
+            # Plotly rgba(255,255,255,0) → Matplotlib (1,1,1,0)
+            return tuple([n/255 for n in nums[:3]] + [nums[3]])
+        elif color_str.startswith('rgb'):
+            nums = list(map(float, re.findall(r'[\d.]+', color_str)))
+            return tuple([n/255 for n in nums[:3]] + [1.0])
+        else:
+            return color_str  # Hex oder Farbname direkt
+
+    def plotly_to_matplotlib_png(fig, rechtecke = None, width=6, height=3):
+        fig_mpl, ax = plt.subplots(figsize=(width, height))
 
         for trace in fig.data:
             if trace.type == "scatter":
-                 # Nur plotten, wenn x und y gleich lang sind und nicht leer
                 if len(trace.x) > 0 and len(trace.y) > 0 and len(trace.x) == len(trace.y):
-                    plt.plot(trace.x, trace.y, label=trace.name)
+                    color = plotly_color_to_mpl(trace.line.color if hasattr(trace.line, "color") else None)
+                    dash = dash_mapping.get(trace.line.dash, 'solid') if hasattr(trace.line, "dash") else 'solid'
+                    
+                    plt.plot(trace.x, trace.y,
+                            label=trace.name,
+                            color=color,
+                            linestyle=dash)
+                    
+                
 
         plt.xlabel(fig.layout.xaxis.title.text if fig.layout.xaxis.title.text else "")
         plt.ylabel(fig.layout.yaxis.title.text if fig.layout.yaxis.title.text else "")
         if any([t.name for t in fig.data]):
             plt.legend()
+
+        #Achsenlimits übernehmen
+        if "xaxis" in fig.layout and fig.layout.xaxis.range:
+            plt.xlim(0, fig.layout.xaxis.range[1])
+        if "yaxis" in fig.layout and fig.layout.yaxis.range:
+            if fig == fig_okonom_plotly:
+                plt.ylim(-100, fig.layout.yaxis.range[1])
+            else:
+                plt.ylim(0, fig.layout.yaxis.range[1])
+
+         #Y-Achse ohne Ticks und Zahlen
+        plt.yticks([])   # entfernt die Zahlen
+        plt.tick_params(axis="y", which="both", bottom=False, top=False)  # entfernt die Striche
+
+        # zweite X-Achse unterhalb der ersten
+        def forward(x):
+            faktor = Anz_ReAss   # ⚡ hier stellst du deinen Skalierungsfaktor ein
+            return x * faktor
+
+        def inverse(x):
+            faktor = 2
+            return x / faktor
+
+        secax = ax.secondary_xaxis(0, functions=(forward, inverse))
+        secax.set_xlabel("Re-Assemblys")
+
+        # erste X-Achse bei -0.2
+        ax.set_xlabel("Lineare Zyklen")
+        ax.xaxis.set_label_position('bottom')
+        ax.xaxis.set_ticks_position('bottom')
+        ax.spines['bottom'].set_position(('axes', -0.2))
+
+        #Ticks auf der zweiten Achse alle 1 Einheit
+        xmin, xmax = ax.get_xlim()
+        sec_ticks = np.arange(np.floor(xmin), np.ceil(xmax * Anz_ReAss) + 1, 1)
+        secax.set_xticks(sec_ticks)
+
+        
+
+        if rechtecke:
+            for rect_params in rechtecke:
+                rect = patches.Rectangle(
+                    (rect_params["x"], rect_params["y"]),
+                    rect_params["width"],
+                    rect_params["height"],
+                    facecolor=rect_params.get("facecolor", "lightblue"),
+                    edgecolor=rect_params.get("edgecolor", "blue"),
+                    alpha=rect_params.get("alpha", 0.8)
+                )
+                ax.add_patch(rect)
+
+        # Legende
+        if any([t.name for t in fig.data]):
+            ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))  # Legende rechts außerhalb
 
         buf = io.BytesIO()
         plt.savefig(buf, format="png", bbox_inches="tight")
@@ -1312,21 +1416,29 @@ def create_pdf(product_name):
 
     y_cursor = height - 3*cm
 
-    for title, fig in plots:
+    fenster_alle = [
+    {"x": okolog_min_neg_to_pos_x, "y": -100, "width": (okolog_max_pos_to_neg_x-okolog_min_neg_to_pos_x), "height": (okolog_xWindow_max_y_value*1.2), "facecolor": "orange", "edgecolor": "red", "alpha": 0.1}, 
+    {"x": okonom_min_neg_to_pos_x, "y": -100-okonom_xWindow_max_y_value*0.1, "width": (okonom_max_pos_to_neg_x-okonom_min_neg_to_pos_x), "height": (okolog_xWindow_max_y_value*1.2), "facecolor": "orange", "edgecolor": "red", "alpha": 0.1}, 
+    {"x": 0.5, "y": -100, "width": (kunde_fenster_schnitt_high-0.5)/Anz_ReAss, "height": ((kunde_xWindow_max_y_value+100)*1.2), "facecolor": "orange", "edgecolor": "red", "alpha": 0.1}  
+    ]
+
+    for i, (title, fig) in enumerate(plots):
         # Überschrift linksbündig
         c.setFont("Helvetica-Bold", 16)
-        c.drawString(2*cm, y_cursor, title)
+        c.drawString(2*cm, y_cursor, str(title))
 
+        fenster = [fenster_alle[i]]
+        
         # Plot als PNG
-        img_buf = plotly_to_matplotlib_png(fig)
+        img_buf = plotly_to_matplotlib_png(fig, rechtecke = fenster)
         img = ImageReader(img_buf)
 
         # Bildgröße im PDF (z. B. 10 cm breit, 5 cm hoch)
-        img_width = 10*cm
-        img_height = 5*cm
+        img_width = 17*cm
+        img_height = 7*cm
 
         # Zentrierte Position
-        x_pos = (width - img_width) / 2
+        x_pos =  2*cm
         y_cursor -= img_height + 1*cm
 
         c.drawImage(img, x_pos, y_cursor, width=img_width, height=img_height)
