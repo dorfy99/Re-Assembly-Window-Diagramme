@@ -1162,21 +1162,18 @@ def create_pdf(product_name):
     if okonom_fenster_high == None: okonom_fenster_high_ =100
     else: okonom_fenster_high_ = okonom_fenster_high
 
-    st.header(okonom_fenster_low)
+    
 
     if okolog_fenster_low == None: okolog_fenster_low_ = 0
     else: okolog_fenster_low_ = okolog_fenster_low
     if kunde_fenster_low == None: kunde_fenster_low_ = 0
     else: kunde_fenster_low_ = kunde_fenster_low
-    if okonom_fenster_low == None: 
-        okonom_fenster_low = 0
-    else: okonom_fenster_low = okonom_fenster_low
+    if okonom_fenster_low == None: okonom_fenster_low_ = 0
+    else: okonom_fenster_low_ = okonom_fenster_low
 
-    st.header(f"okolog_fenster_low kunde_fenster_low okonom_fenster_low")
+     
 
-    
-
-    ges_fenster_low = max(okolog_fenster_low,kunde_fenster_low, okonom_fenster_low)
+    ges_fenster_low = max(okolog_fenster_low_,kunde_fenster_low_, okonom_fenster_low_)
     ges_fenster_high = min(okolog_fenster_high_, kunde_fenster_high_, okonom_fenster_high_)
     min_sweetspot = min(okolog_sweetspot, kunde_sweetspot, okonom_sweetspot)
     max_sweetspot = max(okolog_sweetspot, kunde_sweetspot, okonom_sweetspot)
@@ -1212,95 +1209,7 @@ def create_pdf(product_name):
 
     kopfzeile()
 
-    # # Diagramme zu Bild konvertirern
-    # def plotly_zu_image (fig, width=2000, heigt=800):
-    #     buf = io.BytesIO()
-    #     fig.write_image(buf, format="png", width=width, height=height)
-    #     buf.seek(0)
-    #     return buf
     
-    # # Diagramme (als Bild) anzeigen
-    # plots = [
-    # ("Ökologie Diagramm", fig_okolog_plotly),
-    # ("Ökonomie Diagramm", fig_okonom_plotly),
-    # ("Kundennutzen Diagramm", fig_kunde_plotly)]
-
-    # y_cursor = height - 3*cm
-
-    # for title, fig in plots:
-    #     # Überschrift linksbündig
-    #     c.setFont("Helvetica-Bold", 16)
-    #     c.drawString(2*cm, y_cursor, title)
-
-    #     # Plot in BytesIO PNG
-    #     img_buf = plotly_zu_image(fig)
-    #     img = ImageReader(img_buf)
-
-    #     # Seitenverhältnis & Größe
-    #     img_height = 7*cm
-    #     img_width = img_height * 2000/800 # siehe Verhältnis Breite/Höhe in bild Erstellung oben
-        
-    #     # Position auf der Seite
-    #     x_pos = (width - img_width)/2
-    #     y_cursor -= img_height + 1*cm  # Platz für Bild + Abstand
-
-    #     c.drawImage(img, x_pos, y_cursor, width=img_width, height=img_height)
-
-    #     # Abstand zwischen Plot und nächster Überschrift
-    #     y_cursor -= 1*cm
-
-    # # Diagramme zu SVG konvertieren und als ReportLab Drawing zurückgeben
-    # def plotly_zu_svg(fig, width=2000, height=800):
-    #     buf = io.BytesIO()
-    #     fig.write_image(buf, format="svg", width=width, height=height)
-    #     buf.seek(0)
-    #     svg_text = buf.read().decode("utf-8")  # Bytes → String
-    #     drawing = svg2rlg(io.StringIO(svg_text))
-
-    #     # Skalierung auf Zielhöhe ( 5 cm)
-    #     target_height = 5 * cm
-    #     scale_factor = target_height / drawing.height
-    #     drawing.width *= scale_factor
-    #     drawing.height *= scale_factor
-    #     for obj in drawing.contents:
-    #         obj.scale(scale_factor, scale_factor)
-
-    #     return drawing
-
-    # # Diagramme (als SVG) im PDF anzeigen
-    # plots = [
-    #     ("Ökologie Diagramm", fig_okolog_plotly),
-    #     ("Ökonomie Diagramm", fig_okonom_plotly),
-    #     ("Kundennutzen Diagramm", fig_kunde_plotly)
-    # ]
-
-    # y_cursor = height - 3*cm
-
-    # for title, fig in plots:
-    #     # Überschrift linksbündig
-    #     c.setFont("Helvetica-Bold", 16)
-    #     c.drawString(2*cm, y_cursor, title)
-
-    #     # Plot als SVG/Drawing
-    #     drawing = plotly_zu_svg(fig)
-
-    #     # # Seitenverhältnis & Größe
-    #     # img_height = 5*cm
-    #     # img_width = img_height * 2000 / 800  # Verhältnis Breite/Höhe beibehalten
-
-    #     # # Position auf der Seite
-    #     # x_pos = (width - img_width)/2
-    #     # y_cursor -= img_height + 1*cm  # Platz für Bild + Abstand
-
-    #     x_pos = (width - drawing.width) / 2
-    #     y_cursor -= drawing.height + 1*cm
-
-    #     # SVG ins PDF einfügen
-    #     renderPDF.draw(drawing, c, x_pos, y_cursor)
-
-    #     # Abstand zwischen Plot und nächster Überschrift
-    #     y_cursor -= 1*cm
-
     ## Plotly → Matplotlib → PNG
 
     # Plotly → Matplotlib Dash Mapping
@@ -1355,7 +1264,7 @@ def create_pdf(product_name):
             else:
                 plt.ylim(0, fig.layout.yaxis.range[1])
 
-         #Y-Achse ohne Ticks und Zahlen
+        #Y-Achse ohne Ticks und Zahlen
         plt.yticks([])   # entfernt die Zahlen
         plt.tick_params(axis="y", which="both", bottom=False, top=False)  # entfernt die Striche
 
@@ -1416,10 +1325,30 @@ def create_pdf(product_name):
 
     y_cursor = height - 3*cm
 
+    if okolog_min_neg_to_pos_x == None or okolog_max_pos_to_neg_x == None:
+        okolog_min_neg_to_pos_x_ = 0
+        okolog_fenster_breite = 0
+    else: 
+        okolog_fenster_breite = okolog_max_pos_to_neg_x-okolog_min_neg_to_pos_x
+        okolog_min_neg_to_pos_x_ = okolog_min_neg_to_pos_x
+
+
+    if okonom_min_neg_to_pos_x == None or okonom_max_pos_to_neg_x == None:
+        okonom_min_neg_to_pos_x_ = 0 
+        okonom_fenster_breite = 0
+    else: 
+        okonom_fenster_breite = okonom_max_pos_to_neg_x-okonom_min_neg_to_pos_x
+        okonom_min_neg_to_pos_x_ = okonom_min_neg_to_pos_x 
+
+    
+    if kunde_fenster_schnitt_high == None:
+        kunde_fenster_breite = 0
+    else: kunde_fenster_breite = (kunde_fenster_schnitt_high-0.5)/Anz_ReAss
+    
     fenster_alle = [
-    {"x": okolog_min_neg_to_pos_x, "y": -100, "width": (okolog_max_pos_to_neg_x-okolog_min_neg_to_pos_x), "height": (okolog_xWindow_max_y_value*1.2), "facecolor": "orange", "edgecolor": "red", "alpha": 0.1}, 
-    {"x": okonom_min_neg_to_pos_x, "y": -100-okonom_xWindow_max_y_value*0.1, "width": (okonom_max_pos_to_neg_x-okonom_min_neg_to_pos_x), "height": (okolog_xWindow_max_y_value*1.2), "facecolor": "orange", "edgecolor": "red", "alpha": 0.1}, 
-    {"x": 0.5, "y": -100, "width": (kunde_fenster_schnitt_high-0.5)/Anz_ReAss, "height": ((kunde_xWindow_max_y_value+100)*1.2), "facecolor": "orange", "edgecolor": "red", "alpha": 0.1}  
+    {"x": okolog_min_neg_to_pos_x_, "y": -100, "width": (okolog_fenster_breite), "height": (okolog_xWindow_max_y_value*1.2), "facecolor": "orange", "edgecolor": "red", "alpha": 0.1}, 
+    {"x": okonom_min_neg_to_pos_x_, "y": -100-okonom_xWindow_max_y_value*0.1, "width": (okonom_fenster_breite), "height": (okolog_xWindow_max_y_value*1.2), "facecolor": "orange", "edgecolor": "red", "alpha": 0.1}, 
+    {"x": 0.5, "y": -100, "width": (kunde_fenster_breite), "height": ((kunde_xWindow_max_y_value+100)*1.2), "facecolor": "orange", "edgecolor": "red", "alpha": 0.1}  
     ]
 
     for i, (title, fig) in enumerate(plots):
